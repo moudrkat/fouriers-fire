@@ -1,6 +1,8 @@
 # Fourier's Fire
 
-Live: https://huggingface.co/spaces/Unt1l1f1nd/fouriers-fire · demo: [renders/demo.mp4](renders/demo.mp4), three sentences typed and the fire answering.
+![Fourier's Fire: type a sentence, the words become embers, the equations light up](renders/demo.gif)
+
+Live: https://huggingface.co/spaces/Unt1l1f1nd/fouriers-fire · full demo with sound off: [renders/demo.mp4](renders/demo.mp4)
 
 The 1990s demoscene fire effect read as physics, the one line it was missing,
 a real campfire next to both, and a sentence model whose words become the
