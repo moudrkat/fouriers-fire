@@ -5,5 +5,30 @@
 </head><body><div id="dos"></div>
 <script src="https://v8.js-dos.com/latest/js-dos.js"></script>
 <script>
-Dos(document.getElementById('dos'),{url:'fire.jsdos',autoStart:true,kiosk:true,noCloud:true,onEvent:(e)=>{if(e==='emu-ready')parent.postMessage('dos-ready','*');}});
+// This page runs whatever FIRE.COM its parent sends it. The parent patches two bytes
+// of the assembler from what the model read, then reloads this frame.
+const CONF="[sdl]\noutput=surface\n[dosbox]\nmachine=svga_s3\nmemsize=16\n[cpu]\ncore=auto\ncycles=max\n[autoexec]\nmount c .\nc:\nFIRE.COM\n";
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c;}return b=>{let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=t[(c^b[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0;};})();
+function zip(files){ // stored, no compression: a zip is just headers around the bytes
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const u16=v=>[v&255,v>>8&255],u32=v=>[v&255,v>>8&255,v>>16&255,v>>>24&255];
+  for(const [name,data] of files){const n=enc.encode(name),crc=CRC(data);
+    const lh=new Uint8Array([0x50,0x4b,3,4,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(n.length),0,0,...n]);
+    parts.push(lh,data);
+    cd.push(new Uint8Array([0x50,0x4b,1,2,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(data.length),...u32(data.length),...u16(n.length),0,0,0,0,0,0,0,0,0,0,0,0,...u32(off),...n]));
+    off+=lh.length+data.length;}
+  const cdlen=cd.reduce((a,c)=>a+c.length,0);
+  const end=new Uint8Array([0x50,0x4b,5,6,0,0,0,0,...u16(files.length),...u16(files.length),...u32(cdlen),...u32(off),0,0]);
+  return new Blob([...parts,...cd,end],{type:'application/zip'});
+}
+let started=false;
+function start(com){
+  if(started)return;started=true;
+  const url=URL.createObjectURL(zip([['.jsdos/dosbox.conf',new TextEncoder().encode(CONF)],['FIRE.COM',com]]));
+  Dos(document.getElementById('dos'),{url,autoStart:true,kiosk:true,noCloud:true,onEvent:(e)=>{if(e==='emu-ready')parent.postMessage('dos-ready','*');}});
+}
+window.addEventListener('message',e=>{if(e.data&&e.data.type==='com')start(new Uint8Array(e.data.bytes));});
+// standalone (opened in its own tab): run the file as shipped
+if(window===parent){fetch('FIRE.COM').then(r=>r.arrayBuffer()).then(b=>start(new Uint8Array(b)));}
+else parent.postMessage('dos-hello','*');
 </script></body></html>

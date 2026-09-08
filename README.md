@@ -73,9 +73,12 @@ The fire went out around two. The equations did not.
 | direction alone (shipped, 16+16 anchors) | **30** |
 | direction alone, first version (8+8) | 26 |
 | chance | 20 |
+| control: 20 random directions, same centre | mean 20.8, best 28 |
+| control: anchors with shuffled labels, 20 times | mean 20.6, best 29 |
+| anchors leave-one-out, of 32 | 25 |
 | hottest word as a human would pick | 19 |
 
-Big fires 11/20, embers 19/20. It knows "inferno"; it does not know that "more wood please" means the same. Negation is beyond it.
+Big fires 11/20, embers 19/20. The controls say the direction is real and not strong: a lucky random direction reaches 28. Forty sentences, all by the author of the anchors, is a small test; sentences from other people are the next step. It knows "inferno"; it does not know that "more wood please" means the same. Negation is beyond it.
 
 ## The model
 
@@ -87,17 +90,19 @@ in projection is that word's heat on the bottom row.
 
 What the direction turned out to mean, read off 441 words placed on it: cold end fading, tiny, faded, goodbye, empty, faint; hot end roaring, raging, blazing, fiery, inferno, rise, erupt, surge. An axis of fading versus force with a fire accent, not fire itself.
 
-Honest names for what this is: a difference-of-means direction (the steering
-vector recipe, read not added) and occlusion attribution. It is not attention
-and it is not an LLM.
+Honest names for what this is: a concept direction by difference of means in
+the encoder's output space (the same construction contrastive activation
+addition uses for steering vectors, but nothing here is steered: there is no
+layer after the pooled vector), read as a linear probe; and occlusion
+attribution per word. It is not attention and it is not an LLM.
 
 ## Live
 
 https://huggingface.co/spaces/Unt1l1f1nd/fouriers-fire — a static Space. `space/index.html` is the easy UI: two fires, the sentence box with an Ask button, a hand slider from embers to inferno. `space/about.html` is the whole page. Edit `space/index.src.html`, not `space/index.html`. Rebuild and redeploy:
 
 ```
-cd space && python3 -c "import pathlib;s=pathlib.Path('index.src.html').read_text();pathlib.Path('index.html').write_text(s.replace('__FLUID_JS__',pathlib.Path('../fluid.js').read_text()))"
-/usr/bin/python3 -c "from huggingface_hub import HfApi;HfApi().upload_folder(folder_path='.',repo_id='Unt1l1f1nd/fouriers-fire',repo_type='space',ignore_patterns=['index.src.html'])"
+python3 build.py
+cd space && /usr/bin/python3 -c "from huggingface_hub import HfApi;HfApi().upload_folder(folder_path='.',repo_id='Unt1l1f1nd/fouriers-fire',repo_type='space',ignore_patterns=['index.src.html','record.html'])"
 ```
 
 (`hf upload` fails with a 402 because it tries to re-create the repo; the Python API does not.)
@@ -107,10 +112,9 @@ cd space && python3 -c "import pathlib;s=pathlib.Path('index.src.html').read_tex
 | file | what |
 |---|---|
 | `index.html` | the page source, with `__FLUID_JS__` and `__FIRE_JS__` placeholders |
-| `serve.html` | the built page, open this one |
 | `fire.js` | the trick, 11 lines |
 | `fluid.js` | the equations; also runs in Node for tuning |
-| `fire.s` | the trick in x86 real-mode assembler, GNU as syntax, 153-byte .COM. Runs on the Space in DOSBox compiled to wasm (`space/dos.html`, `space/fire.jsdos`) |
+| `fire.s` | the trick in x86 real-mode assembler, GNU as syntax, 153-byte .COM. Runs on the Space in DOSBox compiled to wasm (`space/dos.html`). The page rewrites two of its bytes from what the model read: 0x53 ember density, 0x7C heat loss per row |
 | `sample.mp4`, `campfire-*.mp4` | the video |
 | `notes/POST.md` | the LinkedIn post, checks, comments (gitignored) |
 
@@ -118,11 +122,7 @@ Serve the folder and open `serve.html`; `python3 -m http.server` is enough.
 The video will not load over `file://` in Chrome. The model is fetched from
 Hugging Face on first load (about 23 MB) and cached by the browser.
 
-To rebuild `serve.html` after editing `index.html`:
-
-```
-python3 -c "import pathlib;s=pathlib.Path('index.html').read_text();pathlib.Path('serve.html').write_text(s.replace('__FLUID_JS__',pathlib.Path('fluid.js').read_text()).replace('__FIRE_JS__',pathlib.Path('fire.js').read_text()))"
-```
+Build everything (assembler, both pages, data the Space serves) with `python3 build.py`.
 
 Assembler, if anyone wants it:
 

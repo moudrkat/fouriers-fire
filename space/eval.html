@@ -43,19 +43,22 @@ button:disabled{background:var(--rule);color:var(--muted)}
     <div class="tile"><b id="tBig">–</b><span>big fires right, of 20</span></div>
     <div class="tile"><b id="tSmall">–</b><span>embers right, of 20</span></div>
     <div class="tile"><b id="tHot">–</b><span>hottest word as a human would pick</span></div>
+    <div class="tile"><b id="tRnd">–</b><span>control: random direction, mean of 20 (best <span id="tRndMax">–</span>)</span></div>
+    <div class="tile"><b id="tShuf">–</b><span>control: shuffled labels, mean of 20 (best <span id="tShufMax">–</span>)</span></div>
+    <div class="tile"><b id="tLoo">–</b><span>anchors leave-one-out, of 32</span></div>
   </div>
-  <p id="note" hidden>Last measured offline on 7 September 2026: 30 of 40 (big 11 of 20, embers 19 of 20), hottest word 19 of 40. Eight anchors per side scored 26; sixteen per side score 30. The misses are the mild ones: "more wood please", "throw another log on", "make it bigger". The model knows "inferno". It does not know that asking for wood means the same thing. Negation is beyond it: "not roaring anymore" reads as roaring.</p>
+  <p id="note" hidden>Measured offline on 8 September 2026: 30 of 40 (big 11 of 20, embers 19 of 20), hottest word 19 of 40. Eight anchors per side scored 26; sixteen per side score 30. Controls: 20 random directions through the same centre average 20.8, best 28; the anchors with shuffled labels average 20.6, best 29; leave-one-out on the 32 anchors 25. So the direction is real and not strong, and forty sentences is a small test. The misses are the mild ones: "more wood please", "throw another log on", "make it bigger". It knows "inferno"; it does not know that asking for wood means the same thing. Negation is beyond it: "not roaring anymore" reads as roaring. All 40 sentences were written by the author of the anchors; sentences from other people are the next step.</p>
   <div class="scroll"><table id="tbl" hidden><thead><tr><th>sentence</th><th>means</th><th>read</th><th></th><th>hottest word</th><th>every word's share</th></tr></thead><tbody></tbody></table></div>
 </div>
 <script type="module">
-import { MODEL_ID, makeProbe, words as splitWords } from './probe.js';
-const cases=await (await fetch('cases.json')).json();
+import { MODEL_ID, makeProbe, makeControls, words as splitWords } from './probe.js';
 const $=id=>document.getElementById(id);
 const esc=t=>t.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 const f2=v=>(v>=0?'+':'')+v.toFixed(2);
 $('go').addEventListener('click',async()=>{
   $('go').disabled=true;
   try{
+    const cases=await (await fetch('cases.json')).json();
     $('status').textContent='fetching the model (23 MB, once)…';
     const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
     const fe=await pipeline('feature-extraction',MODEL_ID,{dtype:'q8',progress_callback:p=>{if(p.status==='progress'&&p.total>1e6)$('bar').style.width=p.progress+'%';}});
@@ -73,6 +76,10 @@ $('go').addEventListener('click',async()=>{
       i++;$('bar').style.width=(100*i/cases.length)+'%';$('status').textContent=`${i} of ${cases.length} · ${ok} right so far`;
       $('tModel').textContent=ok;$('tBig').textContent=okB;$('tSmall').textContent=okS;$('tHot').textContent=hot;
     }
+    $('status').textContent='controls: random directions, shuffled labels, leave-one-out…';
+    const cache=new Map();const emb=async t=>{if(!cache.has(t))cache.set(t,Array.from((await fe(t,{pooling:'mean',normalize:true})).data));return cache.get(t);};
+    const ctl=await makeControls(emb,cases);
+    $('tRnd').textContent=ctl.randomMean.toFixed(1);$('tRndMax').textContent=ctl.randomMax;$('tShuf').textContent=ctl.shuffledMean.toFixed(1);$('tShufMax').textContent=ctl.shuffledMax;$('tLoo').textContent=ctl.loo;
     $('status').textContent=`done: ${ok} of ${cases.length} right, ${((performance.now()-t0)/1000).toFixed(1)} s in your browser`;
     $('note').hidden=false;
   }catch(e){$('status').textContent='could not run: '+String(e).slice(0,160);$('go').disabled=false;}

@@ -63,8 +63,8 @@ ember:  imul    bp, bp, 25173
         add     bp, 13849
         mov     ax, bp
         mov     al, ah                  # take the good bits
-        and     al, 1                   # hot or cold
-        neg     al                      # 0 stays 0, 1 becomes 255
+        cmp     al, 128                 # hot with probability 128/256. This byte is the ember density.
+        sbb     al, al                  # borrow -> 255, no borrow -> 0
         stosb
         loop    ember
 
@@ -84,7 +84,7 @@ cell:   xor     ax, ax
         mov     bl, es:[di+640]
         add     ax, bx
         shr     ax, 2                   # the average
-        sub     al, 1                   # the loss. Bigger number, shorter flame: the height is about (mean source)/loss rows.
+        sub     al, 1                   # the loss. This byte is the flame height: about (mean source)/loss rows.
         jnc     6f
         xor     al, al                  # temperature does not go below zero
 6:      mov     es:[di-320], al         # written one row UP: that is the updraft

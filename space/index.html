@@ -63,6 +63,11 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .how h2{font:400 22px/1.1 var(--serif);margin:14px 0 2px;color:var(--ink)}
 .how p{margin:0;color:var(--ink2);max-width:70ch;font-size:13px}
 .how pre{margin:0;background:var(--panel);border:1px solid var(--rule);padding:12px 14px;overflow-x:auto;font:12px/1.5 var(--mono);color:var(--ink2);max-height:22em}
+.strips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:-4px}
+@media (max-width:700px){.strips{grid-template-columns:1fr}}
+.strips div{display:grid;gap:2px}
+.strips span{font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.strips canvas{width:100%;height:28px;display:block;background:var(--panel);border:1px solid var(--rule)}
 .eqtop{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 28px;padding:2px 4px 0;font:400 clamp(17px,1.9vw,22px)/1.35 var(--serif);color:var(--muted)}
 .eqtop .line{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px;white-space:nowrap}
 .eqtop i{font-style:italic}
@@ -87,6 +92,9 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .how details pre{margin:8px 0}
 .how details code{font-size:12px;color:var(--ink)}
 .dos{display:grid;gap:8px}
+.hex{font:11px/1.6 var(--mono);color:var(--muted);background:var(--panel);border:1px solid var(--rule);padding:10px 12px;overflow-x:auto;margin:0}
+.hex b{color:#fff;font-weight:500;padding:0 2px;border-radius:2px}
+.hex b.d{background:rgba(255,210,90,.35)}.hex b.l{background:rgba(224,86,31,.45)}
 #dos{width:100%;max-width:640px;aspect-ratio:16/10;background:#000;border:1px solid var(--rule);display:none}
 #dos.on{display:block}
 #dos iframe{width:100%;height:100%;border:0;display:block}
@@ -114,6 +122,12 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <span class="tag"><i style="background:var(--phys)"></i>equations</span>
       <div class="words" id="words" aria-hidden="true"></div>
     </div>
+  </div>
+
+  <div class="strips" aria-label="Brightness over the last ten seconds">
+    <div><span>real fire</span><canvas id="sp-real" width="300" height="28"></canvas></div>
+    <div><span>equations</span><canvas id="sp-phys" width="300" height="28"></canvas></div>
+    <div><span>the 90s trick, same rule as FIRE.COM</span><canvas id="sp-trick" width="300" height="28"></canvas></div>
   </div>
 
   <div class="eqtop" id="eq" aria-label="The equations; each term glows with the value the model set">
@@ -218,15 +232,19 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>The direction is not made from these words. It is the difference between the average of 16 "roaring" sentences and 16 "dying" ones (they are in <code>probe.js</code>). The words only describe it afterwards.</li>
       <li>What it turned out to be, read off the 441 words: the cold end is fading, tiny, faded, goodbye, empty, faint; the hot end is roaring, raging, blazing, fiery, inferno, rise, erupt, surge. So it is an axis of fading versus force, with a fire accent, not "fire" itself. "goodbye" is cold and "surge" is hot without any fire in them.</li>
       <li>Half the words are about fire, half are everyday words, so you can see exactly that. Where a word surprises you, that is the model, not the page.</li>
-      <li>The direction is a difference of means: the recipe for a steering vector (contrastive activation addition). People add it to a model to change what it says. Here it is only read.</li>
+      <li>The direction is a difference of means in the encoder's output space: a concept direction, the same construction that contrastive activation addition uses for steering vectors inside a language model. Here nothing is steered; there is no layer after the pooled vector to push. It is a linear probe with no training beyond 32 sentences, and it is only read.</li>
+      <li>Controls, on the same 40 sentences: 20 random directions through the same centre average 20.8 right (best of 20: 28); the anchors with shuffled labels average 20.6 (best 29). Leave-one-out on the 32 anchors: 25. So 30 of 40 is above chance, but not by a lot, and a lucky random direction gets close. Forty sentences is a small test.</li>
       <li>Per-word heat is occlusion: remove the word, watch the score. Zeiler &amp; Fergus, 2014. Not attention: the exported model does not expose attention weights, and a heat you can remove and watch go out is easier to believe.</li>
-      <li>Measured on 40 held-out sentences: 30 right, chance 20. Big fires 11/20, embers 19/20. <a href="eval.html">The eval runs in your browser.</a> <a href="about.html">The long version of all of this, with the fit charts.</a></li>
+      <li>Measured on 40 held-out sentences: 30 right, chance 20. Big fires 11/20, embers 19/20. The sentences were written by the same person who wrote the anchors; the next step is sentences from other people. <a href="eval.html">The eval runs in your browser, controls included.</a> <a href="about.html">The long version of all of this, with the fit charts.</a></li>
       <li>It knows "inferno". It does not know that "more wood please" means the same fire. Word sense, no theory of negation.</li>
     </ul></details>
 
     <h2>The 1990s fire, x86 assembler</h2>
     <p>153 bytes. Fourier's heat equation with the updraft typed in as a constant. It cannot puff.</p>
-    <div class="dos"><div id="dos"></div><button class="btn" id="dosbtn">Run FIRE.COM in DOSBox, in your browser</button><span class="say" id="dossay">153 bytes of 8086, assembled with GNU as. ESC quits. <a href="dos.html" target="_blank" rel="noopener">Or open it in its own tab.</a></span></div>
+    <p>The model reaches this one too, the only way it can: by rewriting two bytes of the program. Byte 0x53 is the ember density, byte 0x7C is the heat lost per row. Every time you type, JavaScript writes those two bytes and, if DOSBox is running, restarts it with the new file. That is the whole state space of the trick: no buoyancy to set, so no puffing to get.</p>
+    <div class="dos"><div id="dos"></div><button class="btn" id="dosbtn">Run FIRE.COM in DOSBox, in your browser</button><span class="say" id="dossay">153 bytes of 8086, assembled with GNU as, two of them written by the page. ESC quits. <a href="dos.html" target="_blank" rel="noopener">Or open the shipped file in its own tab.</a></span></div>
+    <pre class="hex" id="hex"></pre>
+    <p class="say" id="hexsay"></p>
     <details><summary>the whole program, fire.s</summary><ul>
       <li>Every pixel becomes the average of the ones below it, minus a loss. Nothing in it knows that hot air is light, so nothing in it can puff.</li>
       <li>This is the readable version, 70 instructions with comments, 153 bytes assembled. It is not golfed. The 1996 #coders 256 Byte Fire Compo had entries doing this in under 256 bytes; today it is done in 64. This file uses none of those tricks.</li>
@@ -296,8 +314,8 @@ ember:  imul    bp, bp, 25173
         add     bp, 13849
         mov     ax, bp
         mov     al, ah                  # take the good bits
-        and     al, 1                   # hot or cold
-        neg     al                      # 0 stays 0, 1 becomes 255
+        cmp     al, 128                 # hot with probability 128/256. This byte is the ember density.
+        sbb     al, al                  # borrow -&gt; 255, no borrow -&gt; 0
         stosb
         loop    ember
 
@@ -317,7 +335,7 @@ cell:   xor     ax, ax
         mov     bl, es:[di+640]
         add     ax, bx
         shr     ax, 2                   # the average
-        sub     al, 1                   # the loss. Bigger number, shorter flame: the height is about (mean source)/loss rows.
+        sub     al, 1                   # the loss. This byte is the flame height: about (mean source)/loss rows.
         jnc     6f
         xor     al, al                  # temperature does not go below zero
 6:      mov     es:[di-320], al         # written one row UP: that is the updraft
@@ -358,7 +376,7 @@ const i = y * W + x; const t = sample(T, x - u[i], y - v[i]) * (1 - K.k);</pre><
 //
 //   du/dt + (u·∇)u = −∇p + β T ŷ + ε (N × ω)      momentum, with hot air lighter than cold (Boussinesq 1903)
 //   ∇·u = 0                                        the air is incompressible
-//   dT/dt + (u·∇)T = −k T                           heat is carried by the air and radiated away
+//   dT/dt + (u·∇)T = −k T                           heat is carried by the air and leaks to the cold surroundings (Newton cooling, not radiation)
 //
 // Solved the way Jos Stam did it in 1999: semi-Lagrangian advection, a Jacobi
 // pressure solve, one step per frame, unconditionally stable. Velocities are in
@@ -435,30 +453,45 @@ function makeFluid(W, H) {
 }
 if (typeof module !== 'undefined') module.exports = { makeFluid };
 </script>
+<script src="render.js"></script>
 <script>
-document.getElementById('dosbtn').addEventListener('click',()=>{
-  const b=document.getElementById('dosbtn'),el=document.getElementById('dos'),say=document.getElementById('dossay');b.disabled=true;el.classList.add('on');say.textContent='loading DOSBox (wasm)…';
-  const f=document.createElement('iframe');f.src='dos.html';f.setAttribute('title','FIRE.COM in DOSBox');el.appendChild(f);
-  window.addEventListener('message',e=>{if(e.data==='dos-ready')say.textContent='FIRE.COM running in DOSBox, in your browser. The same 153 bytes.';});
-});
+// FIRE.COM, and the two bytes the model is allowed to write
+const COM={bytes:null,DENS:0x53,LOSS:0x7C,dens:128,loss:1,running:false,gen:0};
+fetch('FIRE.COM').then(r=>r.arrayBuffer()).then(b=>{COM.bytes=new Uint8Array(b);COM.dens=COM.bytes[COM.DENS];COM.loss=COM.bytes[COM.LOSS];hexdump();});
+function hexdump(){const el=document.getElementById('hex');if(!COM.bytes)return;let out='';
+  for(let o=0;o<COM.bytes.length;o+=16){out+=o.toString(16).padStart(4,'0')+'  ';for(let j=o;j<Math.min(o+16,COM.bytes.length);j++){const h=COM.bytes[j].toString(16).padStart(2,'0');out+=(j===COM.DENS?'<b class="d">'+h+'</b>':j===COM.LOSS?'<b class="l">'+h+'</b>':h)+' ';}out+='\n';}
+  el.innerHTML=out;
+  document.getElementById('hexsay').innerHTML=`<b>cmp al, ${COM.dens}</b> at 0x53: an ember with probability ${COM.dens}/256 · <b>sub al, ${COM.loss}</b> at 0x7C: ${COM.loss} unit${COM.loss>1?'s':''} of heat lost per row, flame height about ${Math.round(128/COM.loss)} rows`;}
+function patchCom(s){ // from the model's number: density 24..232, loss 1..6
+  if(!COM.bytes)return;const dens=Math.max(24,Math.min(232,Math.round(128+64*s))),loss=Math.max(1,Math.min(6,Math.round(3-1.4*s)));
+  if(dens===COM.dens&&loss===COM.loss)return;COM.dens=dens;COM.loss=loss;COM.bytes[COM.DENS]=dens;COM.bytes[COM.LOSS]=loss;hexdump();
+  if(COM.running)startDos();}
+function startDos(){const el=document.getElementById('dos'),say=document.getElementById('dossay');el.innerHTML='';el.classList.add('on');say.textContent='loading DOSBox (wasm)…';
+  const f=document.createElement('iframe');f.src='dos.html?g='+(++COM.gen);f.setAttribute('title','FIRE.COM in DOSBox');el.appendChild(f);COM.running=true;}
+window.addEventListener('message',e=>{const say=document.getElementById('dossay');
+  if(e.data==='dos-hello'){const f=document.querySelector('#dos iframe');if(f&&f.contentWindow===e.source)e.source.postMessage({type:'com',bytes:Array.from(COM.bytes)},'*');}
+  if(e.data==='dos-ready')say.textContent=`FIRE.COM running in DOSBox, in your browser: density ${COM.dens}/256, loss ${COM.loss}. Type a sentence and it restarts with new bytes.`;});
+document.getElementById('dosbtn').addEventListener('click',()=>{document.getElementById('dosbtn').disabled=true;startDos();});
 </script>
 <script>
-const PAL=new Uint8ClampedArray(256*4);
-{ const stops=[[0,[0,0,0]],[.18,[70,4,0]],[.36,[190,30,0]],[.55,[245,110,10]],[.75,[255,200,60]],[.9,[255,240,180]],[1,[255,255,255]]];
-  for(let i=0;i<256;i++){const t=i/255;let a=stops[0],b=stops[1];for(let s=1;s<stops.length;s++){if(t<=stops[s][0]){a=stops[s-1];b=stops[s];break;}}
-    const f=(t-a[0])/(b[0]-a[0]||1);for(let c=0;c<3;c++)PAL[4*i+c]=a[1][c]+(b[1][c]-a[1][c])*f;PAL[4*i+3]=255;} }
 // the grid: 320x180 if the machine keeps up, 240x135 if it does not
 let W=320,H=180,fluid=makeFluid(W,H),off=document.createElement('canvas'),og,img;
 function setup(){off.width=W;off.height=H;og=off.getContext('2d');img=og.createImageData(W,H);}
 setup();
 Object.assign(fluid.K,{beta:.5,k:.025,eps:.3,p:.55});
 const fc=document.getElementById('fire'),fg=fc.getContext('2d'),gc=document.getElementById('glow'),gg=gc.getContext('2d');
+const trick=makeTrick(160,90);
+const SP={n:300,real:new Float32Array(300),phys:new Float32Array(300),tr:new Float32Array(300),i:0,cnt:0};
+const vc=document.createElement('canvas');vc.width=32;vc.height=18;const vg=vc.getContext('2d',{willReadFrequently:true});
+function videoMean(){try{if(video.readyState<2)return NaN;vg.drawImage(video,0,0,32,18);const d=vg.getImageData(0,0,32,18).data;let t=0;for(let i=0;i<d.length;i+=4)t+=d[i]*.3+d[i+1]*.59+d[i+2]*.11;return t/(32*18)/255;}catch(e){return NaN;}}
 let frames=0,slow=0;
 function loop(){
   const t0=performance.now();
   fluid.step();
-  const p=img.data,T=fluid.T;for(let i=0;i<W*H;i++){const c=4*Math.min(255,T[i]*255|0);p[4*i]=PAL[c];p[4*i+1]=PAL[c+1];p[4*i+2]=PAL[c+2];p[4*i+3]=255;}
-  og.putImageData(img,0,0);fg.imageSmoothingEnabled=true;fg.drawImage(off,0,0,W,H,0,0,fc.width,fc.height);gg.drawImage(off,0,0,W,H,0,0,gc.width,gc.height);
+  paintField(img,fluid.T,W*H);og.putImageData(img,0,0);fg.imageSmoothingEnabled=true;fg.drawImage(off,0,0,W,H,0,0,fc.width,fc.height);gg.drawImage(off,0,0,W,H,0,0,gc.width,gc.height);
+  trick.step();
+  const vm=videoMean();SP.real[SP.i]=isNaN(vm)?(SP.cnt?SP.real[(SP.i-1+SP.n)%SP.n]:0):vm;SP.phys[SP.i]=fluid.mean();SP.tr[SP.i]=trick.mean();SP.i=(SP.i+1)%SP.n;if(SP.cnt<SP.n)SP.cnt++;
+  if(frames%3===0){sparkline(document.getElementById('sp-real'),SP.real,SP.cnt,SP.i,'#4E8FCB');sparkline(document.getElementById('sp-phys'),SP.phys,SP.cnt,SP.i,'#E0561F');sparkline(document.getElementById('sp-trick'),SP.tr,SP.cnt,SP.i,'#B58A3C');}
   if(performance.now()-t0>22)slow++;
   if(++frames===120&&slow>60&&W===320){const K=Object.assign({},fluid.K);W=240;H=135;fluid=makeFluid(W,H);Object.assign(fluid.K,K);setup();if(lastWords)applyWords(lastWords,lastShares,lastS);}
   requestAnimationFrame(loop);
@@ -487,19 +520,13 @@ function setSize(s,fromSlider){
   if(!fromSlider)sizeEl.value=s;
   if(lastWords)applyWords(lastWords,lastShares,s);
 }
-sizeEl.addEventListener('input',()=>setSize(+sizeEl.value,true));
-function wordColor(h,share){return share<-.05?'#4E8FCB':`rgb(${Math.max(125,Math.round(255*h))},${Math.round(110+120*h*h)},${Math.round(92+40*h)})`;}
+sizeEl.addEventListener('input',()=>{setSize(+sizeEl.value,true);patchCom(+sizeEl.value);});
 function applyWords(words,shares,s){
   lastWords=words;lastShares=shares;lastS=s;
-  const heat=new Float32Array(W),x0=W*.12,x1=W*.88,span=(x1-x0)/words.length;
+  const x0=W*.12,x1=W*.88,span=(x1-x0)/words.length;
   const wordsEl=document.getElementById('words');wordsEl.innerHTML='';
-  words.forEach((w,i)=>{
-    const h=Math.max(.15,Math.min(1,.6+.25*s+1.8*shares[i]));
-    for(let x=Math.round(x0+i*span);x<Math.round(x0+(i+1)*span)-1;x++)heat[x]=h;
-    const sp=document.createElement('span');sp.textContent=w;sp.style.left=(x0+i*span)/W*100+'%';sp.style.width=span/W*100+'%';sp.style.color=wordColor(h,shares[i]);
-    wordsEl.appendChild(sp);
-  });
-  fluid.heat=heat;
+  words.forEach((w,i)=>{const sp=document.createElement('span');sp.textContent=w;sp.style.left=(x0+i*span)/W*100+'%';sp.style.width=span/W*100+'%';sp.style.color=wordColor(wordHeat(s,shares[i]),shares[i]);wordsEl.appendChild(sp);});
+  fluid.heat=emberHeat(W,words,shares,s);
   const top=words[shares.indexOf(Math.max(...shares))];const h=document.getElementById('v-hot');if(h.textContent!==top){h.textContent=top;flash('t-p');}
 }
 function strip(id,vec){const c=document.getElementById(id),g=c.getContext('2d'),img=g.createImageData(vec.length,1);let m=0;for(const v of vec)m=Math.max(m,Math.abs(v));
@@ -515,6 +542,7 @@ const showBar=p=>{if(p==null){bar.classList.remove('on');return;}bar.classList.a
 let probe=null;
 async function load(){
   try{
+    const c=navigator.connection;if(c&&(c.saveData||/cellular|2g|3g/.test(c.effectiveType||c.type||''))){say('the model is 23 MB, once. On mobile data: <button class="btn" id="loadbtn" style="padding:4px 8px">fetch it</button>');await new Promise(r=>document.getElementById('loadbtn').addEventListener('click',r,{once:true}));}
     showBar(0);
     const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
     const fe=await pipeline('feature-extraction',MODEL_ID,{dtype:'q8',progress_callback:p=>{if(p.status==='progress'&&p.total>1e6){showBar(p.progress);say(`fetching all-MiniLM-L6-v2 ${Math.round(p.progress)} %`,true);}}});
@@ -565,7 +593,7 @@ async function run(){
   const before=Object.assign({},fluid.K);
   const {full,shares}=await probe.shares(w);
   const s=Math.max(-1.5,Math.min(1.5,full));
-  applyWords(w,shares,s);setSize(s,false);
+  applyWords(w,shares,s);setSize(s,false);patchCom(s);
   const top=w[shares.indexOf(Math.max(...shares))];
   strip('strip-e',await probe.embed(w.join(' ')));strip('strip-d',probe.dir);
   document.getElementById('v-proj').textContent=f2(full);

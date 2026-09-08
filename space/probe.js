@@ -37,3 +37,22 @@ export const UP = /\b(roar|roaring|blaze|blazing|ablaze|bigger|big|huge|more|fee
 export function rules(text) { if (DOWN.test(text)) return -1; if (UP.test(text)) return 1; return 0; }
 
 export const words = (text) => text.trim().split(/\s+/).filter(Boolean).slice(0, 24);
+
+// Controls, so that 30/40 means something. All three use the same cached embeddings.
+//  random:   the same centre, 20 random unit directions. Should sit at chance.
+//  shuffled: the 32 anchors with their labels shuffled 20 times, direction rebuilt. Should sit at chance.
+//  loo:      each anchor projected on the direction built from the other 31. How separable the anchors are.
+export async function makeControls(embed, cases, seed = 1) {
+  let x = seed; const rnd = () => { x = (x * 1103515245 + 12345) & 0x7fffffff; return x / 0x7fffffff; };
+  const A = [...BIG.map(t => ({ t, y: 1 })), ...SMALL.map(t => ({ t, y: -1 }))];
+  const E = new Map(); for (const a of A) E.set(a.t, await embed(a.t)); for (const c of cases) E.set(c.text, await embed(c.text));
+  const dim = E.get(A[0].t).length;
+  const dirOf = (rows) => { const b = rows.filter(r => r.y > 0).map(r => E.get(r.t)), s = rows.filter(r => r.y < 0).map(r => E.get(r.t)); const mb = mean(b), ms = mean(s); return { dir: mb.map((v, i) => v - ms[i]), centre: mb.map((v, i) => (v + ms[i]) / 2) }; };
+  const acc = (dir, centre) => cases.reduce((n, c) => n + ((dot(Array.from(E.get(c.text), (v, i) => v - centre[i]), dir) >= 0 ? 1 : -1) === c.label ? 1 : 0), 0);
+  const base = dirOf(A);
+  const random = []; for (let k = 0; k < 20; k++) { const d = Array.from({ length: dim }, () => rnd() - .5); random.push(acc(d, base.centre)); }
+  const shuffled = []; for (let k = 0; k < 20; k++) { const ys = A.map(a => a.y); for (let i = ys.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ys[i], ys[j]] = [ys[j], ys[i]]; } const d = dirOf(A.map((a, i) => ({ t: a.t, y: ys[i] }))); shuffled.push(acc(d.dir, d.centre)); }
+  let loo = 0; for (let i = 0; i < A.length; i++) { const d = dirOf(A.filter((_, j) => j !== i)); const s = dot(Array.from(E.get(A[i].t), (v, k) => v - d.centre[k]), d.dir); loo += (s >= 0 ? 1 : -1) === A[i].y ? 1 : 0; }
+  const avg = a => a.reduce((x, y) => x + y, 0) / a.length;
+  return { n: cases.length, direction: acc(base.dir, base.centre), randomMean: avg(random), randomMax: Math.max(...random), shuffledMean: avg(shuffled), shuffledMax: Math.max(...shuffled), loo, anchors: A.length };
+}
