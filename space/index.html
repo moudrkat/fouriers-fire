@@ -50,6 +50,7 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .verdict p{margin:0}
 .verdict b{color:var(--ink);font-weight:500}
 .verdict .hot{color:var(--phys)}.verdict .cold{color:var(--vid)}
+.verdict .c-beta{color:rgb(255,140,60)}.verdict .c-k{color:rgb(110,170,235)}.verdict .c-p{color:rgb(255,210,90)}
 .say b{color:var(--ink);font-weight:500}
 .bar{height:2px;background:var(--rule);display:none}.bar.on{display:block}.bar i{display:block;height:100%;background:var(--phys);width:0}
 .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -70,6 +71,8 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .term{position:relative;padding:0 6px;border-radius:3px;transition:color .5s,text-shadow .5s,background .5s;color:var(--muted)}
 .term small{font:10px/1 var(--mono);color:var(--muted);margin-left:6px;vertical-align:middle;letter-spacing:.02em;opacity:.8}
 .term small.hotw{color:inherit;opacity:.9}
+.term em{position:absolute;left:6px;top:100%;margin-top:-2px;font:9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:inherit;opacity:.7;white-space:nowrap;font-style:normal}
+.eqtop{padding-bottom:14px}
 .term.flash{background:rgba(255,255,255,.06)}
 .nums{background:var(--panel);border:1px solid var(--rule);padding:12px 14px;display:grid;gap:8px;font-size:12px;color:var(--ink2)}
 .nums .row{display:grid;grid-template-columns:minmax(12em,18em) 1fr;gap:12px;align-items:center}
@@ -116,9 +119,9 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
   </div>
 
   <div class="eqtop" id="eq" aria-label="The equations; each term glows with the value the model set">
-    <div class="line">∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <span class="term" id="t-beta"><i>β</i><i>T</i>ŷ<small id="v-beta">0.50</small></span></div>
-    <div class="line">∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = −<span class="term" id="t-k"><i>k</i><i>T</i><small id="v-k">0.025</small></span></div>
-    <div class="line"><i>T</i>(<i>x</i>, bottom) = <span class="term" id="t-p">embers(<i>x</i>)<small id="v-p">0.55</small><small id="v-hot" class="hotw"></small></span></div>
+    <div class="line">∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <span class="term" id="t-beta"><i>β</i><i>T</i>ŷ<small id="v-beta">0.50</small><em>buoyancy</em></span></div>
+    <div class="line">∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = −<span class="term" id="t-k"><i>k</i><i>T</i><small id="v-k">0.025</small><em>cooling</em></span></div>
+    <div class="line"><i>T</i>(<i>x</i>, bottom) = <span class="term" id="t-p">embers(<i>x</i>)<small id="v-p">0.55</small><small id="v-hot" class="hotw"></small><em>ember density · hottest word</em></span></div>
   </div>
 
   <div class="ask">
@@ -570,7 +573,7 @@ function explain(words,shares,full,before,after){
   if(up.length)h+=`<p>Pushing toward inferno: ${up.map(i=>li(i,'hot')).join(', ')}.</p>`;else h+=`<p>No word pushes toward inferno on its own.</p>`;
   if(down.length)h+=`<p>Pulling toward embers: ${down.map(i=>li(i,'cold')).join(', ')}.</p>`;
   if(words.length>1)h+=`<p>Each number is how far the reading drops when that word is removed. ${flip?`Without <b>${esc(words[top])}</b> the sentence would read the other way.`:`Without <b>${esc(words[top])}</b> it would still read the same way, just less so.`}</p>`;
-  h+=`<p>So the fire changed: buoyancy ${before.beta.toFixed(2)} → <b>${after.beta.toFixed(2)}</b>, cooling ${before.k.toFixed(3)} → <b>${after.k.toFixed(3)}</b>, ember density ${before.p.toFixed(2)} → <b>${after.p.toFixed(2)}</b>, and <b>${esc(words[top])}</b> burns hottest on the bottom row. No keywords, no rules: one projection and ${words.length+(words.length>1?1:0)} forward passes.</p>`;
+  h+=`<p>So in the equations above: <b class="c-beta">buoyancy β</b> ${before.beta.toFixed(2)} → <b class="c-beta">${after.beta.toFixed(2)}</b>, <b class="c-k">cooling k</b> ${before.k.toFixed(3)} → <b class="c-k">${after.k.toFixed(3)}</b>, <b class="c-p">ember density</b> ${before.p.toFixed(2)} → <b class="c-p">${after.p.toFixed(2)}</b>, and <b class="c-p">${esc(words[top])}</b> burns hottest on the bottom row. No keywords, no rules: one projection and ${words.length+(words.length>1?1:0)} forward passes.</p>`;
   verdictEl.innerHTML=h;verdictEl.hidden=false;
 }
 let pending=false,running=false;
