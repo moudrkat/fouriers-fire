@@ -56,7 +56,11 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .actions .say{flex:1;min-width:12em}
 
 /* how it works */
-.how{display:grid;gap:10px;margin-top:22px;padding-top:18px;border-top:1px solid var(--rule)}
+.all{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
+.all>summary{cursor:pointer;font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);padding:10px 0;list-style:none;display:flex;gap:10px;align-items:center}
+.all>summary::before{content:"▸";color:var(--phys)}
+.all[open]>summary::before{content:"▾"}
+.how{display:grid;gap:10px;margin-top:6px}
 .how h2{font:400 22px/1.1 var(--serif);margin:14px 0 2px;color:var(--ink)}
 .how p{margin:0;color:var(--ink2);max-width:70ch;font-size:13px}
 .how pre{margin:0;background:var(--panel);border:1px solid var(--rule);padding:12px 14px;overflow-x:auto;font:12px/1.5 var(--mono);color:var(--ink2);max-height:22em}
@@ -95,7 +99,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
 </style>
 </head>
 <body>
-<header><h1>Fourier's Fire</h1><span><a href="about.html">how it works</a> &nbsp; <a href="eval.html">evals</a></span></header>
+<header><h1>Fourier's Fire</h1></header>
 <main>
   <div class="fires">
     <div class="pane">
@@ -133,6 +137,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <span class="say" id="recsay">webm, both fires side by side, with your sentence</span>
   </div>
 
+  <details class="all"><summary>how it works, the equations, the model, the assembler, the evals</summary>
   <section class="how">
     <h2>How it works</h2>
     <p>Sentence → 384 numbers → one number on the embers→inferno line → the fire. Remove a word: its heat.</p>
@@ -193,7 +198,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>Half the words are about fire, half are everyday words, so you can see exactly that. Where a word surprises you, that is the model, not the page.</li>
       <li>The direction is a difference of means: the recipe for a steering vector (contrastive activation addition). People add it to a model to change what it says. Here it is only read.</li>
       <li>Per-word heat is occlusion: remove the word, watch the score. Zeiler &amp; Fergus, 2014. Not attention: the exported model does not expose attention weights, and a heat you can remove and watch go out is easier to believe.</li>
-      <li>Measured on 40 held-out sentences: 30 right, chance 20. Big fires 11/20, embers 19/20. <a href="eval.html">The eval runs in your browser.</a></li>
+      <li>Measured on 40 held-out sentences: 30 right, chance 20. Big fires 11/20, embers 19/20. <a href="eval.html">The eval runs in your browser.</a> <a href="about.html">The long version of all of this, with the fit charts.</a></li>
       <li>It knows "inferno". It does not know that "more wood please" means the same fire. Word sense, no theory of negation.</li>
     </ul></details>
 
@@ -323,6 +328,7 @@ const i = y * W + x; const t = sample(T, x - u[i], y - v[i]) * (1 - K.k);</pre><
       <li>Heat is advected with the air and multiplied by (1 − k) each step. Source: <code>fluid.js</code> in the repo.</li>
     </ul></details>
   </section>
+  </details>
 </main>
 <footer>Left, a campfire. Right, Navier–Stokes with "hot air is light", solved in your browser. Type, and each word becomes an ember as hot as its share of the sentence. Nothing you type leaves this tab.</footer>
 
