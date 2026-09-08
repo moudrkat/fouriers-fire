@@ -69,6 +69,7 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .term{position:relative;padding:0 6px;border-radius:3px;transition:color .5s,text-shadow .5s,background .5s;color:var(--muted)}
 .term small{font:10px/1 var(--mono);color:var(--muted);margin-left:6px;vertical-align:middle;letter-spacing:.02em;opacity:.8}
 .term small.hotw{color:inherit;opacity:.9}
+.eqtop .eps{font-size:.62em;color:var(--muted);opacity:.7;margin-left:4px}
 .term em{position:absolute;left:6px;top:100%;margin-top:-2px;font:9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:inherit;opacity:.7;white-space:nowrap;font-style:normal}
 .eqtop{padding-bottom:14px}
 .term.flash{background:rgba(255,255,255,.06)}
@@ -116,7 +117,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
   </div>
 
   <div class="eqtop" id="eq" aria-label="The equations; each term glows with the value the model set">
-    <div class="line">∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <span class="term" id="t-beta"><i>β</i><i>T</i>ŷ<small id="v-beta">0.50</small><em>buoyancy</em></span></div>
+    <div class="line">∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <span class="term" id="t-beta"><i>β</i><i>T</i>ŷ<small id="v-beta">0.50</small><em>buoyancy</em></span><span class="eps" title="vorticity confinement: the swirl the grid eats, put back">+ <i>ε</i>(<i>N</i>×<i>ω</i>)</span></div>
     <div class="line">∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = −<span class="term" id="t-k"><i>k</i><i>T</i><small id="v-k">0.025</small><em>cooling</em></span></div>
     <div class="line"><i>T</i>(<i>x</i>, bottom) = <span class="term" id="t-p">embers(<i>x</i>)<small id="v-p">0.55</small><small id="v-hot" class="hotw"></small><em>ember density · hottest word</em></span></div>
   </div>
@@ -153,7 +154,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <h2>The equations</h2>
     <p>Under the two fires, each term glows with the value the model has just set: orange for buoyancy, blue for cooling, yellow for the embers. The tiny numbers are those values.</p>
     <div class="eqstatic">
-      <div>∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <i>β</i><i>T</i>ŷ</div>
+      <div>∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <i>β</i><i>T</i>ŷ + <i>ε</i>(<i>N</i>×<i>ω</i>)</div>
       <div>∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = −<i>k</i><i>T</i></div>
       <div><i>T</i>(<i>x</i>, bottom) = embers(<i>x</i>)</div>
       <div>∇·<i>u</i> = 0</div>
@@ -168,10 +169,10 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li><b>Name.</b> The incompressible Navier–Stokes equations with the Boussinesq approximation for buoyancy, coupled to an advection equation for temperature. Two dimensions.</li>
       <li><b>Momentum.</b> ∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i>/<i>ρ</i> + <i>ν</i>∇²<i>u</i> + <i>g</i><i>β</i><sub>T</sub>(<i>T</i> − <i>T</i><sub>0</sub>) ŷ. Newton's second law for a parcel of air: acceleration equals pressure pushing it, viscosity dragging it, and buoyancy lifting it if it is warmer than its surroundings.</li>
       <li><b>Continuity.</b> ∇·<i>u</i> = 0. Air neither piles up nor thins out. This is what the pressure enforces.</li>
-      <li><b>Heat.</b> ∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = <i>α</i>∇²<i>T</i> − <i>k</i>(<i>T</i> − <i>T</i><sub>0</sub>). Temperature is carried along by the air, spreads by conduction, and is lost to radiation and to the cold surroundings.</li>
+      <li><b>Heat.</b> ∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = <i>α</i>∇²<i>T</i> − <i>k</i>(<i>T</i> − <i>T</i><sub>0</sub>). Temperature is carried along by the air, spreads by conduction, and is lost to the cold surroundings. The −k(T − T₀) term is Newton cooling, a linear loss; real radiation goes as T⁴ and is not in here.</li>
       <li><b>Symbols.</b> <i>u</i> velocity (m/s; here cells per frame). <i>p</i> pressure. <i>ρ</i> density. <i>ν</i> kinematic viscosity. <i>g</i> gravity, 9.81 m/s². <i>β</i><sub>T</sub> thermal expansion coefficient of air, about 1/300 per kelvin. <i>T</i> − <i>T</i><sub>0</sub> temperature above ambient. <i>α</i> thermal diffusivity. <i>k</i> a loss rate, per second.</li>
       <li><b>What the page lumps together.</b> The single <i>β</i> on the page is <i>g β</i><sub>T</sub>, in grid units. <i>ρ</i> is folded into <i>p</i>. <i>ν</i> and <i>α</i> are not set at all: the grid's own numerical diffusion plays both roles, and a vorticity-confinement term <i>ε</i>(<i>N</i> × <i>ω</i>) puts back the small swirls that diffusion eats (Fedkiw, Stam &amp; Jensen, 2001).</li>
-      <li><b>Boussinesq.</b> Density is treated as constant everywhere except in the buoyancy term. Valid when temperature differences are small compared with absolute temperature; a real flame is at the edge of that, but it is the standard first model of a plume and it gives the puffing.</li>
+      <li><b>Boussinesq.</b> Density is treated as constant everywhere except in the buoyancy term. That is valid when temperature differences are small compared with absolute temperature. A flame is hundreds of kelvin above ambient, so this is well beyond Boussinesq's assumptions, not at their edge. It still looks right because the puffing instability of a buoyant plume is robust enough not to care. Read it as a model of a hot plume over a heat source, not of combustion.</li>
       <li><b>What is not in it.</b> No chemistry: the fire is a prescribed source of heat on the bottom row. No radiation transport beyond the −<i>kT</i> loss. No third dimension. No soot, so no smoke.</li>
       <li><b>Boundary conditions.</b> Bottom: <i>T</i> = embers(<i>x</i>), the words; no flow through the floor. Sides: no flow through the walls. Top: open, air leaves freely.</li>
       <li><b>The 1990s trick, in the same language.</b> ∂<i>T</i>/∂<i>t</i> = <i>D</i> ∂²<i>T</i>/∂<i>x</i>² − <i>v</i> ∂<i>T</i>/∂<i>y</i> − <i>kT</i>. Fourier's heat equation with a constant vertical wind <i>v</i> put in by hand. There is no <i>u</i> to solve for, so nothing can puff.</li>
@@ -179,7 +180,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     </ul></details>
     <details><summary>what each term is</summary><ul>
       <li><b>βTŷ</b>: hot air is light, so it rises. This is the one line the 1990s fire never had, and it is where the flicker comes from. Boussinesq, 1903.</li>
-      <li><b>−kT</b>: heat is lost as it rises. Cooling sets how tall the flame gets.</li>
+      <li><b>−kT</b>: Newton cooling, heat leaking to the cold surroundings at a rate proportional to how hot the air is. Not radiation, which would go as T⁴. Cooling sets how tall the flame gets.</li>
       <li><b>embers(x)</b>: the boundary condition. Normally random; when you type, each word is a patch of embers as hot as its share.</li>
       <li><b>∇·u = 0</b>: air does not pile up. Enforced every frame by a pressure solve (16 Jacobi sweeps). Never changes, so it is not coloured.</li>
       <li>Solved on a 320×180 grid, one step per frame, the way Jos Stam did it in 1999: semi-Lagrangian advection, so it never blows up.</li>

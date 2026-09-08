@@ -2,7 +2,7 @@
 //
 //   du/dt + (u·∇)u = −∇p + β T ŷ + ε (N × ω)      momentum, with hot air lighter than cold (Boussinesq 1903)
 //   ∇·u = 0                                        the air is incompressible
-//   dT/dt + (u·∇)T = −k T                           heat is carried by the air and radiated away
+//   dT/dt + (u·∇)T = −k T                           heat is carried by the air and leaks to the cold surroundings (Newton cooling, not radiation)
 //
 // Solved the way Jos Stam did it in 1999: semi-Lagrangian advection, a Jacobi
 // pressure solve, one step per frame, unconditionally stable. Velocities are in

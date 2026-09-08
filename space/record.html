@@ -136,7 +136,7 @@ function frame(){
     S.words.forEach((w,i)=>{const h=Math.max(.15,Math.min(1,.6+.25*S.s+1.8*S.shares[i]));ctx.fillStyle=S.shares[i]<-.05?'#4E8FCB':`rgb(${Math.max(125,Math.round(255*h))},${Math.round(110+120*h*h)},${Math.round(92+40*h)})`;ctx.shadowColor='#000';ctx.shadowBlur=8;ctx.fillText(w,x0+(i+.5)*span,SCENE-16,span-6);});ctx.shadowBlur=0;ctx.textAlign='left';}
   // equations, glowing by the constants
   const K=fluid.K,ey=SCENE+EQ/2;
-  eqLine(ey-70,'∂u/∂t + (u·∇)u = −∇p + ','βTŷ',(K.beta-.05)/1.15,[255,140,60],'buoyancy '+K.beta.toFixed(2));
+  eqLine(ey-70,'∂u/∂t + (u·∇)u = −∇p + ε(N×ω) + ','βTŷ',(K.beta-.05)/1.15,[255,140,60],'buoyancy '+K.beta.toFixed(2));
   eqLine(ey,'∂T/∂t + (u·∇)T = −','kT',(K.k-.005)/.095,[110,170,235],'cooling '+K.k.toFixed(3));
   eqLine(ey+70,'T(x, bottom) = ','embers(x)',(K.p-.05)/.95,[255,210,90],'ember density '+K.p.toFixed(2)+(S.hot?' · hottest: '+S.hot:''));
   // text band
