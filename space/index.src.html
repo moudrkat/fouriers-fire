@@ -45,6 +45,9 @@ input[type=range]::-moz-range-track{height:2px;background:var(--rule)}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--phys);box-shadow:0 0 14px var(--phys);margin-top:-8px;border:0}
 input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--phys);box-shadow:0 0 14px var(--phys);border:0}
 input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px}
+.egs{display:flex;flex-wrap:wrap;gap:6px}
+.eg{font:12px var(--mono);color:var(--ink2);background:transparent;border:1px solid var(--rule);padding:5px 9px;cursor:pointer;border-radius:2px}
+.eg:hover{border-color:var(--phys);color:var(--ink)}
 .say{font-size:12px;color:var(--ink2);min-height:1.5em}
 .verdict{background:var(--panel);border:1px solid var(--rule);padding:12px 14px;font-size:13px;line-height:1.6;color:var(--ink2);display:grid;gap:6px}
 .verdict p{margin:0}
@@ -136,6 +139,14 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <input type="text" id="ask" value="the logs have caught and it is starting to roar" autocomplete="off" spellcheck="false" aria-label="Tell the fire what it is doing" placeholder="type here: feed it more wood…">
       <button type="submit" class="btn primary" id="askbtn">Ask</button>
     </form>
+    <div class="egs" id="egs">
+      <button type="button" class="eg">throw another log on</button>
+      <button type="button" class="eg">just glowing embers now</button>
+      <button type="button" class="eg">flames taller than me</button>
+      <button type="button" class="eg">the party is over</button>
+      <button type="button" class="eg" title="it gets this one wrong, and the expander says why">not roaring anymore</button>
+      <button type="button" class="eg">goodbye</button>
+    </div>
     <div class="bar" id="bar"><i id="barfill"></i></div>
     <p class="say" id="say">loading a 23 MB sentence model into your browser…</p>
     <div class="verdict" id="verdict" hidden></div>
@@ -147,9 +158,9 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
   </div>
 
 
-  <details class="all"><summary>how it works, the equations, the model, the assembler, the evals</summary>
+  <details class="all"><summary>how it works, in seven questions</summary>
   <section class="how">
-    <h2>How it works</h2>
+    <h2>How does a sentence become a fire?</h2>
     <p>Sentence → 384 numbers → one number on the embers→inferno line → the fire. Remove a word: its heat.</p>
     <details><summary>the steps</summary><ul>
       <li>The model turns any sentence into 384 numbers; similar meanings land close together. At load it does this for 16 "roaring" and 16 "dying" sentences, and the line between their two averages is the scale, −1 to +1.</li>
@@ -157,7 +168,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>Each word is removed in turn and the sentence re-embedded; the drop is the word's heat on the bottom row. No word lists, no rules.</li>
     </ul></details>
 
-    <h2>The equations</h2>
+    <h2>What is the model allowed to touch?</h2>
     <p>Under the two fires, each term glows with the value the model has just set: orange for buoyancy, blue for cooling, yellow for the embers. The tiny numbers are those values.</p>
     <div class="eqstatic">
       <div>∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <i>β</i><i>T</i>ŷ + <i>ε</i>(<i>N</i>×<i>ω</i>)</div>
@@ -184,7 +195,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li><b>Numerics.</b> 320×180 cells, one step per frame, semi-Lagrangian advection (Stam 1999), 16 Jacobi sweeps for the pressure. Unconditionally stable; the price is extra numerical diffusion, which is what <i>ε</i> compensates.</li>
     </ul></details>
 
-    <h2>The model</h2>
+    <h2>What does the model actually see?</h2>
     <p><b>all-MiniLM-L6-v2</b>, 22.7 M parameters, 23 MB, in your tab. It cannot answer, only place. This is what it sees:</p>
     <div class="nums">
       <div class="row"><span>your sentence, 384 numbers</span><canvas id="strip-e" width="384" height="14"></canvas></div>
@@ -199,13 +210,13 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>It reads word pieces, runs six layers of attention, and averages the last layer over the tokens. No decoder. Runs as an 8-bit ONNX export on WebAssembly; nothing you type leaves the tab.</li>
     </ul></details>
 
-    <h2>What the direction means</h2>
-    <p>441 words placed on the line by the model. Coldest and hottest thirty; the rest below. On 40 held-out sentences the sign is right 30 times, chance 20; <a href="eval.html">the eval, with controls</a>. What the direction is and is not: <a href="https://github.com/moudrkat/fouriers-fire#the-model">the README</a>.</p>
+    <h2>What does "embers→inferno" mean to the model?</h2>
+    <p>Try "not roaring anymore" above: it reads as roaring. The model has word sense and no theory of "not". 441 words placed on the line by the model, coldest and hottest thirty; the rest below. On 40 held-out sentences the sign is right 30 times, chance 20; <a href="eval.html">the eval, with controls</a>. What the direction is and is not: <a href="https://github.com/moudrkat/fouriers-fire#the-model">the README</a>.</p>
     <div class="dict" id="dict"><span style="color:var(--muted)">waiting for the model…</span></div>
     <details><summary>all 441 words, coldest to hottest</summary><div class="dict" id="dictall"></div></details>
     <form class="own" id="ownform"><input type="text" id="own" placeholder="place your own word" autocomplete="off" aria-label="Place your own word on the line"><button type="submit" class="btn">Place</button><span class="say" id="ownsay"></span></form>
 
-    <h2>Does it puff?</h2>
+    <h2>Why does a real fire flicker?</h2>
     <p>The brightness of each fire over the last ten seconds. A real fire pulses, a few times a second. The equations pulse too, because hot air is light. The trick only flickers: noise, no rhythm.</p>
     <div class="strips" aria-label="Brightness over the last ten seconds">
     <div><span>real fire</span><canvas id="sp-real" width="300" height="28"></canvas></div>
@@ -219,7 +230,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>The simulated pulse has its own time scale (a frame, not a second), so the count will not match the real fire's. The claim is that there is a rhythm, not that it is the same rhythm.</li>
     </ul></details>
 
-    <h2>The 1990s fire, x86 assembler</h2>
+    <h2>What did the 1990s do in 153 bytes?</h2>
     <p>153 bytes. Fourier's heat equation with the updraft typed in as a constant. It cannot puff.</p>
     <p>The model reaches this one too, the only way it can: by rewriting two bytes, 0x53 ember density and 0x7C heat lost per row, and restarting DOSBox. That is the trick's whole state space. No buoyancy to set, so no puffing to get.</p>
     <div class="ask" style="margin:6px 0 10px">
@@ -257,7 +268,7 @@ cell:   xor     ax, ax
         cmp     di, 198*320
         jb      cell</pre></details>
 
-    <h2>The equations, JavaScript</h2>
+    <h2>What line did they leave out?</h2>
     <p>Ninety lines. One of them says hot air is light. It puffs.</p>
     <details><summary>the lines that matter</summary><ul><li>One line adds buoyancy. Then the air must stay incompressible, so a pressure solve. Then the heat rides the air. That is the whole difference between the trick and a fire.</li></ul><pre>// buoyancy: hot air is light. This single line is what the 1990s trick does not have.
 for (let i = 0; i &lt; N; i++) v[i] -= K.beta * T[i];
@@ -435,6 +446,7 @@ ask.addEventListener('input',()=>{ask2.value=ask.value;clearTimeout(timer);timer
 ask2.addEventListener('input',()=>{ask.value=ask2.value;clearTimeout(timer);timer=setTimeout(run,300);});
 document.getElementById('askform').addEventListener('submit',e=>{e.preventDefault();run();});
 document.getElementById('askform2').addEventListener('submit',e=>{e.preventDefault();run();});
+document.querySelectorAll('.eg').forEach(b=>b.addEventListener('click',()=>{ask.value=b.textContent;ask2.value=b.textContent;run();}));
 load();
 </script>
 </body>
