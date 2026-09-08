@@ -200,17 +200,10 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     </ul></details>
 
     <h2>What the direction means</h2>
-    <p>441 words placed on the line by the model. Coldest and hottest thirty; the rest below.</p>
+    <p>441 words placed on the line by the model. Coldest and hottest thirty; the rest below. On 40 held-out sentences the sign is right 30 times, chance 20; <a href="eval.html">the eval, with controls</a>. What the direction is and is not: <a href="https://github.com/moudrkat/fouriers-fire#the-model">the README</a>.</p>
     <div class="dict" id="dict"><span style="color:var(--muted)">waiting for the model…</span></div>
     <details><summary>all 441 words, coldest to hottest</summary><div class="dict" id="dictall"></div></details>
     <form class="own" id="ownform"><input type="text" id="own" placeholder="place your own word" autocomplete="off" aria-label="Place your own word on the line"><button type="submit" class="btn">Place</button><span class="say" id="ownsay"></span></form>
-    <details><summary>what this is, and what it is not</summary><ul>
-      <li>The direction is not made from these words. It is the difference between the average of 16 "roaring" sentences and 16 "dying" ones (in <code>probe.js</code>); the words only describe it afterwards. Read off them, it is an axis of fading versus force with a fire accent, not "fire" itself: "goodbye" is cold and "surge" is hot without any fire in them.</li>
-      <li>It is a concept direction in the encoder's output space, the same construction contrastive activation addition uses for steering vectors inside a language model. Nothing is steered here; there is no layer after the pooled vector to push. It is a linear probe, only read.</li>
-      <li>Per-word heat is occlusion: remove the word, watch the score (Zeiler &amp; Fergus, 2014). Not attention: the exported model does not expose it, and a heat you can remove and watch go out is easier to believe.</li>
-      <li>Measured on 40 held-out sentences: 30 right, chance 20. Controls on the same sentences: 20 random directions average 20.8 (best 28), shuffled labels average 20.6 (best 29), leave-one-out on the anchors 25 of 32. Real, not strong, and a small test written by the author of the anchors. <a href="eval.html">The eval runs in your browser.</a> <a href="about.html">The long version, with the fit charts.</a></li>
-      <li>It knows "inferno". It does not know that "more wood please" means the same fire, and "not roaring anymore" reads as roaring. Word sense, no theory of negation.</li>
-    </ul></details>
 
     <h2>Does it puff?</h2>
     <p>The brightness of each fire over the last ten seconds. A real fire pulses, a few times a second. The equations pulse too, because hot air is light. The trick only flickers: noise, no rhythm.</p>

@@ -88,7 +88,7 @@ difference of their means is a direction. Your sentence is projected onto it;
 the projection sets β, k and p. Then each word is removed in turn and the drop
 in projection is that word's heat on the bottom row.
 
-What the direction turned out to mean, read off 441 words placed on it: cold end fading, tiny, faded, goodbye, empty, faint; hot end roaring, raging, blazing, fiery, inferno, rise, erupt, surge. An axis of fading versus force with a fire accent, not fire itself.
+The direction is the difference between the average of 16 "roaring" sentences and 16 "dying" ones. It is not made from those 441 words; they only describe it afterwards. What it turned out to mean, read off them: cold end fading, tiny, faded, goodbye, empty, faint; hot end roaring, raging, blazing, fiery, inferno, rise, erupt, surge. An axis of fading versus force with a fire accent, not fire itself.
 
 Honest names for what this is: a concept direction by difference of means in
 the encoder's output space (the same construction contrastive activation
