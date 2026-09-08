@@ -17,7 +17,7 @@ reached the tent. Someone else filmed the fire on a phone, which is the video
 on the left of the page.
 
 My boss looked at the flames and remembered a fire effect from the 1990s, done
-in a few hundred bytes of assembler, where the assembler wrote the assembler.
+in under 256 bytes of assembler, where the assembler wrote the assembler.
 I said I could do that. I did it in eleven lines of JavaScript, with the real
 fire in front of me for reference. I lost, on bytes. Then I noticed the eleven
 lines were Fourier's heat equation with an updraft typed in as a constant, and
