@@ -29,8 +29,6 @@ main{display:grid;align-content:start;gap:14px;padding:0 16px 16px;max-width:112
 .btn:disabled{color:var(--muted);cursor:default}
 .btn.primary{background:var(--phys);border-color:var(--phys);color:#fff}
 .btn.primary:hover{background:#f06a33}
-.filebtn{position:absolute;right:10px;bottom:10px;background:rgba(11,9,7,.72)}
-.filebtn input{position:absolute;width:1px;height:1px;opacity:0}
 .label{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
 .ask>.label{color:rgb(230,150,90)}
 .ask{display:grid;gap:8px}
@@ -108,7 +106,6 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <div class="pane">
       <video id="video" src="sample.mp4" muted loop playsinline autoplay></video>
       <span class="tag"><i style="background:var(--vid)"></i>real fire</span>
-      <label class="btn filebtn">your video<input type="file" id="file" accept="video/*"></label>
     </div>
     <div class="pane">
       <canvas id="glow" width="640" height="360" aria-hidden="true"></canvas>
@@ -376,7 +373,6 @@ requestAnimationFrame(loop);
 showK();
 const video=document.getElementById('video');video.play().catch(()=>{});
 fetch('sample.mp4').then(r=>r.blob()).then(b=>{if(!video.currentTime){video.src=URL.createObjectURL(b);video.play().catch(()=>{});}}).catch(()=>{});
-document.getElementById('file').addEventListener('change',e=>{const f=e.target.files[0];if(f){video.src=URL.createObjectURL(f);video.play().catch(()=>{});}});
 function setK(key,val,lo,hi){fluid.K[key]=Math.max(lo,Math.min(hi,val));}
 // fire size s in [-1.5, 1.5]: embers to inferno. Set by the slider, or by the model.
 const sizeEl=document.getElementById('size');
