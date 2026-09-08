@@ -146,35 +146,30 @@ function frame(){
     ctx.font='400 26px "IBM Plex Mono",monospace';ctx.fillStyle='#B5A48E';ctx.fillText('the embers are your words · hf.co/spaces/Unt1l1f1nd/fouriers-fire',W/2,ty+118);ctx.textAlign='left';}
   else{
     ctx.font='400 46px "Instrument Serif",Georgia,serif';ctx.fillStyle='#EDE3D3';
-    ctx.fillText(S.prompt+((S.caret&&!S.thinking&&Math.floor(performance.now()/500)%2===0)?'|':''),60,ty+34);
+    ctx.fillText(S.prompt+((S.caret&&!S.thinking&&S.blink)?'|':''),60,ty+34);
     ctx.font='400 24px "IBM Plex Mono",monospace';ctx.fillStyle=S.thinking?'#7D6E5C':'#B5A48E';ctx.fillText(S.status,60,ty+108);
     if(S.values){ctx.font='400 22px "IBM Plex Mono",monospace';ctx.fillStyle='#7D6E5C';ctx.fillText(S.values,60,ty+152);}
   }
-  requestAnimationFrame(frame);
 }
 await document.fonts.ready;
-frame();
+video.pause();
+window.__seek=t=>new Promise(r=>{if(Math.abs(video.currentTime-t)<.001)return r();video.onseeked=()=>r();video.currentTime=t;});
+window.__tick=async(t)=>{await window.__seek(t%8);frame();return comp.toDataURL('image/jpeg',.92);};
+window.__S=S;window.__K=()=>fluid.K;
 // model
 let probe=null;
 const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
 const fe=await pipeline('feature-extraction',MODEL_ID,{dtype:'q8'});
 probe=await makeProbe(async t=>Array.from((await fe(t,{pooling:'mean',normalize:true})).data));
 window.__ready=true;
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
+
 function setSize(s){s=Math.max(-1.5,Math.min(1.5,s));fluid.K.p=Math.max(.05,Math.min(1,.55+.3*s));fluid.K.beta=Math.max(.05,Math.min(1.2,.5*(1+.45*s)));fluid.K.k=Math.max(.005,Math.min(.1,.025*(1-.3*s)));}
 function applyWords(words,shares,s){S.words=words;S.shares=shares;S.s=s;const heat=new Float32Array(FW),x0=FW*.12,span=FW*.76/words.length;
   words.forEach((w,i)=>{const h=Math.max(.15,Math.min(1,.6+.25*s+1.8*shares[i]));for(let x=Math.round(x0+i*span);x<Math.round(x0+(i+1)*span)-1;x++)heat[x]=h;});fluid.heat=heat;
   S.hot=words[shares.indexOf(Math.max(...shares))];}
-async function type(t){S.prompt='';S.status='';S.values='';for(const c of t){S.prompt+=c;await wait(36);}await wait(200);}
-async function read(){const w=splitWords(S.prompt);S.thinking=true;S.status='reading it, in your browser…';const t0=performance.now();
-  const {full,shares}=await probe.shares(w);await wait(Math.max(0,550-(performance.now()-t0)));S.thinking=false;
-  const s=Math.max(-1.5,Math.min(1.5,full));applyWords(w,shares,s);setSize(s);
+window.__read=async()=>{const w=splitWords(S.prompt);S.thinking=true;S.status='reading it, in your browser…';
+  const {full,shares}=await probe.shares(w);
+  const s=Math.max(-1.5,Math.min(1.5,full));applyWords(w,shares,s);setSize(s);S.thinking=false;
   S.status=`the model read ${f2(full)} on embers→inferno · hottest word: ${S.hot}`;
-  S.values=`β ${fluid.K.beta.toFixed(2)} · k ${fluid.K.k.toFixed(3)} · embers ${fluid.K.p.toFixed(2)} · no keywords, no rules`;}
-window.__run=async()=>{
-  S.title='a campfire, 7 September 2026';
-  S.prompt='the logs have caught and it is starting to roar';await read();await wait(1800);
-  await type('let it die down, just glowing embers');await read();await wait(3200);
-  await type('flames taller than me');await read();await wait(3800);
-  S.end=true;await wait(2000);window.__done=true;};
+  S.values=`β ${fluid.K.beta.toFixed(2)} · k ${fluid.K.k.toFixed(3)} · embers ${fluid.K.p.toFixed(2)} · no keywords, no rules`;return full;};
 </script></body></html>
