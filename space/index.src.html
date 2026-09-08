@@ -159,21 +159,6 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>No word lists, no rules. "not roaring anymore" fools it, because the model has no theory of "not".</li>
     </ul></details>
 
-    <h2>Does it puff?</h2>
-    <p>The brightness of each fire over the last ten seconds. A real fire pulses, a few times a second. The equations pulse too, because hot air is light. The trick only flickers: noise, no rhythm.</p>
-    <div class="strips" aria-label="Brightness over the last ten seconds">
-    <div><span>real fire</span><canvas id="sp-real" width="300" height="28"></canvas></div>
-    <div><span>equations</span><canvas id="sp-phys" width="300" height="28"></canvas></div>
-    <div><span>the 90s trick, same rule as FIRE.COM</span><canvas id="sp-trick" width="300" height="28"></canvas></div>
-  </div>
-
-    <details><summary>why this is the whole point</summary><ul>
-      <li>Real fires puff at about 1.5/√<i>d</i> Hz for a fire <i>d</i> metres across (Cetegen &amp; Ahmed, 1993). It is an instability of the rising column of hot air: it pinches off into blobs.</li>
-      <li>The equations have that column, so they get the instability for free. Nothing in them was told to pulse.</li>
-      <li>The trick has no column. Its updraft is a constant typed in by hand, so its brightness is the noise of the random embers and nothing else. This strip is the difference between the two fires in one line.</li>
-      <li>The simulated pulse has its own time scale (a frame, not a second), so the number of pulses will not match the real fire's. The claim is that there is a rhythm, not that it is the same rhythm.</li>
-    </ul></details>
-
     <h2>The equations</h2>
     <p>Under the two fires, each term glows with the value the model has just set: orange for buoyancy, blue for cooling, yellow for the embers. The tiny numbers are those values.</p>
     <div class="eqstatic">
@@ -201,35 +186,20 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li><b>The 1990s trick, in the same language.</b> ∂<i>T</i>/∂<i>t</i> = <i>D</i> ∂²<i>T</i>/∂<i>x</i>² − <i>v</i> ∂<i>T</i>/∂<i>y</i> − <i>kT</i>. Fourier's heat equation with a constant vertical wind <i>v</i> put in by hand. There is no <i>u</i> to solve for, so nothing can puff.</li>
       <li><b>Numerics.</b> 320×180 cells, one step per frame, semi-Lagrangian advection (Stam 1999), 16 Jacobi sweeps for the pressure. Unconditionally stable; the price is extra numerical diffusion, which is what <i>ε</i> compensates.</li>
     </ul></details>
-    <details><summary>what each term is</summary><ul>
-      <li><b>βTŷ</b>: hot air is light, so it rises. This is the one line the 1990s fire never had, and it is where the flicker comes from. Boussinesq, 1903.</li>
-      <li><b>−kT</b>: Newton cooling, heat leaking to the cold surroundings at a rate proportional to how hot the air is. Not radiation, which would go as T⁴. Cooling sets how tall the flame gets.</li>
-      <li><b>embers(x)</b>: the boundary condition. Normally random; when you type, each word is a patch of embers as hot as its share.</li>
-      <li><b>∇·u = 0</b>: air does not pile up. Enforced every frame by a pressure solve (16 Jacobi sweeps). Never changes, so it is not coloured.</li>
-      <li>Solved on a 320×180 grid, one step per frame, the way Jos Stam did it in 1999: semi-Lagrangian advection, so it never blows up.</li>
-    </ul></details>
 
-    <h2>What the model sees</h2>
+    <h2>The model</h2>
+    <p><b>all-MiniLM-L6-v2</b>, 22.7 M parameters, 23 MB, in your tab. It cannot answer, only place. This is what it sees:</p>
     <div class="nums">
       <div class="row"><span>your sentence, 384 numbers</span><canvas id="strip-e" width="384" height="14"></canvas></div>
       <div class="row"><span>the embers→inferno direction, 384 numbers</span><canvas id="strip-d" width="384" height="14"></canvas></div>
       <div class="row"><span>one number: how far along the line</span><b id="v-proj">–</b></div>
       <div class="row"><span>each word, removed in turn</span><span id="v-words">–</span></div>
     </div>
-    <details><summary>what these numbers are</summary><ul>
-      <li>Top strip: the 384 numbers for your sentence, orange positive, blue negative.</li>
-      <li>Second strip: the direction, the difference between the "roaring" average and the "embers" average. Same 384 slots.</li>
-      <li>"How far along the line" is the dot product of the two, scaled so the training averages sit at ±1.</li>
-      <li>Each word: the sentence without that word, re-embedded, and the drop. Positive pushes toward inferno, negative toward embers.</li>
-    </ul></details>
-
-    <h2>What the model is</h2>
-    <p><b>all-MiniLM-L6-v2</b>, 22.7 M parameters, 23 MB, in your tab. It cannot answer, only place.</p>
-    <details><summary>the specifics</summary><ul>
-      <li>6 transformer layers, 384 hidden units, 12 attention heads, 22.7 million parameters.</li>
-      <li>Distilled from Microsoft's MiniLM; fine-tuned by the sentence-transformers team on about a billion sentence pairs so that paraphrases land close together.</li>
-      <li>Reads word pieces, runs six layers of attention, averages the last layer over the tokens: 384 numbers per sentence. No decoder.</li>
-      <li>Runs here as an 8-bit ONNX export, 23 MB, on WebAssembly, in your tab. Nothing you type leaves it.</li>
+    <details><summary>what these numbers are, and what the model is</summary><ul>
+      <li>Top strip: the 384 numbers for your sentence, orange positive, blue negative. Second strip: the direction, the difference between the "roaring" average and the "embers" average, same 384 slots.</li>
+      <li>"How far along the line" is the dot product of the two, scaled so the two training averages sit at ±1. Each word: the sentence without it, re-embedded, and the drop.</li>
+      <li>The model is a small BERT-style encoder: 6 transformer layers, 384 hidden units, 12 attention heads. Distilled from Microsoft's MiniLM, fine-tuned by the sentence-transformers team on about a billion sentence pairs so that paraphrases land close together.</li>
+      <li>It reads word pieces, runs six layers of attention, and averages the last layer over the tokens. No decoder. Runs as an 8-bit ONNX export on WebAssembly; nothing you type leaves the tab.</li>
     </ul></details>
 
     <h2>What the direction means</h2>
@@ -238,19 +208,30 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <details><summary>all 441 words, coldest to hottest</summary><div class="dict" id="dictall"></div></details>
     <form class="own" id="ownform"><input type="text" id="own" placeholder="place your own word" autocomplete="off" aria-label="Place your own word on the line"><button type="submit" class="btn">Place</button><span class="say" id="ownsay"></span></form>
     <details><summary>what this is, and what it is not</summary><ul>
-      <li>The direction is not made from these words. It is the difference between the average of 16 "roaring" sentences and 16 "dying" ones (they are in <code>probe.js</code>). The words only describe it afterwards.</li>
-      <li>What it turned out to be, read off the 441 words: the cold end is fading, tiny, faded, goodbye, empty, faint; the hot end is roaring, raging, blazing, fiery, inferno, rise, erupt, surge. So it is an axis of fading versus force, with a fire accent, not "fire" itself. "goodbye" is cold and "surge" is hot without any fire in them.</li>
-      <li>Half the words are about fire, half are everyday words, so you can see exactly that. Where a word surprises you, that is the model, not the page.</li>
-      <li>The direction is a difference of means in the encoder's output space: a concept direction, the same construction that contrastive activation addition uses for steering vectors inside a language model. Here nothing is steered; there is no layer after the pooled vector to push. It is a linear probe with no training beyond 32 sentences, and it is only read.</li>
-      <li>Controls, on the same 40 sentences: 20 random directions through the same centre average 20.8 right (best of 20: 28); the anchors with shuffled labels average 20.6 (best 29). Leave-one-out on the 32 anchors: 25. So 30 of 40 is above chance, but not by a lot, and a lucky random direction gets close. Forty sentences is a small test.</li>
-      <li>Per-word heat is occlusion: remove the word, watch the score. Zeiler &amp; Fergus, 2014. Not attention: the exported model does not expose attention weights, and a heat you can remove and watch go out is easier to believe.</li>
-      <li>Measured on 40 held-out sentences: 30 right, chance 20. Big fires 11/20, embers 19/20. The sentences were written by the same person who wrote the anchors; the next step is sentences from other people. <a href="eval.html">The eval runs in your browser, controls included.</a> <a href="about.html">The long version of all of this, with the fit charts.</a></li>
-      <li>It knows "inferno". It does not know that "more wood please" means the same fire. Word sense, no theory of negation.</li>
+      <li>The direction is not made from these words. It is the difference between the average of 16 "roaring" sentences and 16 "dying" ones (in <code>probe.js</code>); the words only describe it afterwards. Read off them, it is an axis of fading versus force with a fire accent, not "fire" itself: "goodbye" is cold and "surge" is hot without any fire in them.</li>
+      <li>It is a concept direction in the encoder's output space, the same construction contrastive activation addition uses for steering vectors inside a language model. Nothing is steered here; there is no layer after the pooled vector to push. It is a linear probe, only read.</li>
+      <li>Per-word heat is occlusion: remove the word, watch the score (Zeiler &amp; Fergus, 2014). Not attention: the exported model does not expose it, and a heat you can remove and watch go out is easier to believe.</li>
+      <li>Measured on 40 held-out sentences: 30 right, chance 20. Controls on the same sentences: 20 random directions average 20.8 (best 28), shuffled labels average 20.6 (best 29), leave-one-out on the anchors 25 of 32. Real, not strong, and a small test written by the author of the anchors. <a href="eval.html">The eval runs in your browser.</a> <a href="about.html">The long version, with the fit charts.</a></li>
+      <li>It knows "inferno". It does not know that "more wood please" means the same fire, and "not roaring anymore" reads as roaring. Word sense, no theory of negation.</li>
+    </ul></details>
+
+    <h2>Does it puff?</h2>
+    <p>The brightness of each fire over the last ten seconds. A real fire pulses, a few times a second. The equations pulse too, because hot air is light. The trick only flickers: noise, no rhythm.</p>
+    <div class="strips" aria-label="Brightness over the last ten seconds">
+    <div><span>real fire</span><canvas id="sp-real" width="300" height="28"></canvas></div>
+    <div><span>equations</span><canvas id="sp-phys" width="300" height="28"></canvas></div>
+    <div><span>the 90s trick, same rule as FIRE.COM</span><canvas id="sp-trick" width="300" height="28"></canvas></div>
+  </div>
+
+    <details><summary>why this is the whole point</summary><ul>
+      <li>Real fires puff at about 1.5/√<i>d</i> Hz for a fire <i>d</i> metres across (Cetegen &amp; Ahmed, 1993): the rising column of hot air pinches off into blobs. The equations have that column, so they get the rhythm for free.</li>
+      <li>The trick has no column. Its updraft is a constant typed in by hand, so its brightness is the noise of the random embers and nothing else. This strip is the difference between the two fires in one line.</li>
+      <li>The simulated pulse has its own time scale (a frame, not a second), so the count will not match the real fire's. The claim is that there is a rhythm, not that it is the same rhythm.</li>
     </ul></details>
 
     <h2>The 1990s fire, x86 assembler</h2>
     <p>153 bytes. Fourier's heat equation with the updraft typed in as a constant. It cannot puff.</p>
-    <p>The model reaches this one too, the only way it can: by rewriting two bytes of the program. Byte 0x53 is the ember density, byte 0x7C is the heat lost per row. Every time you type, JavaScript writes those two bytes and, if DOSBox is running, restarts it with the new file. That is the whole state space of the trick: no buoyancy to set, so no puffing to get.</p>
+    <p>The model reaches this one too, the only way it can: by rewriting two bytes, 0x53 ember density and 0x7C heat lost per row, and restarting DOSBox. That is the trick's whole state space. No buoyancy to set, so no puffing to get.</p>
     <div class="ask" style="margin:6px 0 10px">
       <span class="label">tell this fire too, the same model reads it</span>
       <form id="askform2"><input type="text" id="ask2" autocomplete="off" spellcheck="false" aria-label="Tell the assembler fire what it is doing" placeholder="type here: let it die down…"><button type="submit" class="btn primary">Ask</button></form>
