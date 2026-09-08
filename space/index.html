@@ -63,7 +63,7 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .how h2{font:400 22px/1.1 var(--serif);margin:14px 0 2px;color:var(--ink)}
 .how p{margin:0;color:var(--ink2);max-width:70ch;font-size:13px}
 .how pre{margin:0;background:var(--panel);border:1px solid var(--rule);padding:12px 14px;overflow-x:auto;font:12px/1.5 var(--mono);color:var(--ink2);max-height:22em}
-.strips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:-4px}
+.strips{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:4px 0 8px}
 @media (max-width:700px){.strips{grid-template-columns:1fr}}
 .strips div{display:grid;gap:2px}
 .strips span{font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -124,12 +124,6 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     </div>
   </div>
 
-  <div class="strips" aria-label="Brightness over the last ten seconds">
-    <div><span>real fire</span><canvas id="sp-real" width="300" height="28"></canvas></div>
-    <div><span>equations</span><canvas id="sp-phys" width="300" height="28"></canvas></div>
-    <div><span>the 90s trick, same rule as FIRE.COM</span><canvas id="sp-trick" width="300" height="28"></canvas></div>
-  </div>
-
   <div class="eqtop" id="eq" aria-label="The equations; each term glows with the value the model set">
     <div class="line">∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <span class="term" id="t-beta"><i>β</i><i>T</i>ŷ<small id="v-beta">0.50</small><em>buoyancy</em></span><span class="eps" title="vorticity confinement: the swirl the grid eats, put back">+ <i>ε</i>(<i>N</i>×<i>ω</i>)</span></div>
     <div class="line">∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = −<span class="term" id="t-k"><i>k</i><i>T</i><small id="v-k">0.025</small><em>cooling</em></span></div>
@@ -163,6 +157,21 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>Your sentence is projected onto that line. One number. That number sets buoyancy, cooling and ember density.</li>
       <li>Each word is removed in turn and the sentence re-embedded. The drop is the word's share; the share is its heat on the bottom row.</li>
       <li>No word lists, no rules. "not roaring anymore" fools it, because the model has no theory of "not".</li>
+    </ul></details>
+
+    <h2>Does it puff?</h2>
+    <p>The brightness of each fire over the last ten seconds. A real fire pulses, a few times a second. The equations pulse too, because hot air is light. The trick only flickers: noise, no rhythm.</p>
+    <div class="strips" aria-label="Brightness over the last ten seconds">
+    <div><span>real fire</span><canvas id="sp-real" width="300" height="28"></canvas></div>
+    <div><span>equations</span><canvas id="sp-phys" width="300" height="28"></canvas></div>
+    <div><span>the 90s trick, same rule as FIRE.COM</span><canvas id="sp-trick" width="300" height="28"></canvas></div>
+  </div>
+
+    <details><summary>why this is the whole point</summary><ul>
+      <li>Real fires puff at about 1.5/√<i>d</i> Hz for a fire <i>d</i> metres across (Cetegen &amp; Ahmed, 1993). It is an instability of the rising column of hot air: it pinches off into blobs.</li>
+      <li>The equations have that column, so they get the instability for free. Nothing in them was told to pulse.</li>
+      <li>The trick has no column. Its updraft is a constant typed in by hand, so its brightness is the noise of the random embers and nothing else. This strip is the difference between the two fires in one line.</li>
+      <li>The simulated pulse has its own time scale (a frame, not a second), so the number of pulses will not match the real fire's. The claim is that there is a rhythm, not that it is the same rhythm.</li>
     </ul></details>
 
     <h2>The equations</h2>
