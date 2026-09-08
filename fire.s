@@ -20,31 +20,35 @@ _start:
         push    0xa000                  # es -> the screen, i.e. the temperature field T(x,y)
         pop     es
 
-# --- the palette: T -> colour.  black -> red -> yellow -> white  (6-bit DAC, 0..63)
+# --- the palette: T -> colour.  black -> red (T=31) -> yellow (T=63) -> white (T=159).  6-bit DAC, 0..63
         mov     dx, 0x3c8               # "start at colour 0"
         xor     al, al
         out     dx, al
         inc     dx                      # 3c9h takes r, g, b, r, g, b, ...
         xor     cx, cx                  # cl = colour index 0..255
-pal:    mov     al, cl                  # red   = min(T, 63)
-        cmp     al, 63
+pal:    mov     al, cl                  # red   = min(2T, 62)
+        cmp     al, 31
         jbe     1f
-        mov     al, 63
-1:      out     dx, al
-        mov     al, cl                  # green = clamp(T - 64, 0, 63)
-        sub     al, 64
+        mov     al, 31
+1:      add     al, al
+        out     dx, al
+        mov     al, cl                  # green = clamp(2(T - 32), 0, 62)
+        sub     al, 32
         jnc     2f
         xor     al, al
-2:      cmp     al, 63
+2:      cmp     al, 31
         jbe     3f
-        mov     al, 63
-3:      out     dx, al
-        mov     al, cl                  # blue  = max(T - 128, 0) / 2
-        sub     al, 128
+        mov     al, 31
+3:      add     al, al
+        out     dx, al
+        mov     al, cl                  # blue  = clamp(T - 96, 0, 63)
+        sub     al, 96
         jnc     4f
         xor     al, al
-4:      shr     al, 1
-        out     dx, al
+4:      cmp     al, 63
+        jbe     5f
+        mov     al, 63
+5:      out     dx, al
         inc     cl
         jnz     pal
 
@@ -81,9 +85,9 @@ cell:   xor     ax, ax
         add     ax, bx
         shr     ax, 2                   # the average
         sub     al, 1                   # the loss. Bigger number, shorter flame: the height is about (mean source)/loss rows.
-        jnc     5f
+        jnc     6f
         xor     al, al                  # temperature does not go below zero
-5:      mov     es:[di-320], al         # written one row UP: that is the updraft
+6:      mov     es:[di-320], al         # written one row UP: that is the updraft
         inc     di
         cmp     di, 198*320
         jb      cell

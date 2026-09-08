@@ -108,7 +108,7 @@ cd space && python3 -c "import pathlib;s=pathlib.Path('index.src.html').read_tex
 | `serve.html` | the built page, open this one |
 | `fire.js` | the trick, 11 lines |
 | `fluid.js` | the equations; also runs in Node for tuning |
-| `fire.s` | the trick in x86 real-mode assembler, GNU as syntax, 145-byte .COM. Runs on the Space in DOSBox compiled to wasm (`space/dos.html`, `space/fire.jsdos`) |
+| `fire.s` | the trick in x86 real-mode assembler, GNU as syntax, 153-byte .COM. Runs on the Space in DOSBox compiled to wasm (`space/dos.html`, `space/fire.jsdos`) |
 | `sample.mp4`, `campfire-*.mp4` | the video |
 | `notes/POST.md` | the LinkedIn post, checks, comments (gitignored) |
 
