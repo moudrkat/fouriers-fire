@@ -251,6 +251,11 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <h2>The 1990s fire, x86 assembler</h2>
     <p>153 bytes. Fourier's heat equation with the updraft typed in as a constant. It cannot puff.</p>
     <p>The model reaches this one too, the only way it can: by rewriting two bytes of the program. Byte 0x53 is the ember density, byte 0x7C is the heat lost per row. Every time you type, JavaScript writes those two bytes and, if DOSBox is running, restarts it with the new file. That is the whole state space of the trick: no buoyancy to set, so no puffing to get.</p>
+    <div class="ask" style="margin:6px 0 10px">
+      <span class="label">tell this fire too, the same model reads it</span>
+      <form id="askform2"><input type="text" id="ask2" autocomplete="off" spellcheck="false" aria-label="Tell the assembler fire what it is doing" placeholder="type here: let it die down…"><button type="submit" class="btn primary">Ask</button></form>
+      <p class="say" id="say2"></p>
+    </div>
     <div class="dos"><div id="dos"></div><button class="btn" id="dosbtn">Run FIRE.COM in DOSBox, in your browser</button><span class="say" id="dossay">153 bytes of 8086, assembled with GNU as, two of them written by the page. ESC quits. <a href="dos.html" target="_blank" rel="noopener">Or open the shipped file in its own tab.</a></span></div>
     <pre class="hex" id="hex"></pre>
     <p class="say" id="hexsay"></p>
@@ -546,7 +551,7 @@ function strip(id,vec){const c=document.getElementById(id),g=c.getContext('2d'),
 <script type="module">
 import { MODEL_ID, makeProbe, words as splitWords } from './probe.js';
 const sayEl=document.getElementById('say'),bar=document.getElementById('bar'),fill=document.getElementById('barfill'),verdictEl=document.getElementById('verdict');
-const say=(t,busy)=>{sayEl.innerHTML=t;sayEl.style.color=busy?'var(--muted)':'';};
+const say=(t,busy)=>{sayEl.innerHTML=t;sayEl.style.color=busy?'var(--muted)':'';const s2=document.getElementById('say2');if(s2){s2.innerHTML=t;s2.style.color=busy?'var(--muted)':'';}};
 const showBar=p=>{if(p==null){bar.classList.remove('on');return;}bar.classList.add('on');fill.style.width=Math.max(2,Math.min(100,p))+'%';};
 let probe=null;
 async function load(){
@@ -612,8 +617,12 @@ async function run(){
   running=false;if(pending){pending=false;run();}
 }
 let timer=null;
-document.getElementById('ask').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(run,300);});
+const ask=document.getElementById('ask'),ask2=document.getElementById('ask2');
+ask2.value=ask.value;
+ask.addEventListener('input',()=>{ask2.value=ask.value;clearTimeout(timer);timer=setTimeout(run,300);});
+ask2.addEventListener('input',()=>{ask.value=ask2.value;clearTimeout(timer);timer=setTimeout(run,300);});
 document.getElementById('askform').addEventListener('submit',e=>{e.preventDefault();run();});
+document.getElementById('askform2').addEventListener('submit',e=>{e.preventDefault();run();});
 load();
 </script>
 </body>
