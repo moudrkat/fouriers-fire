@@ -6,6 +6,26 @@ The 1990s demoscene fire effect read as physics, the one line it was missing,
 a real campfire next to both, and a sentence model whose words become the
 embers.
 
+## How this happened
+
+On the evening of 7 September 2026 the LifeHeck team went camping. There was a
+fire. There were, within two metres of the fire, four open laptops, because it
+was a hackathon and nobody had told the fire. Someone asked whether the wifi
+reached the tent. Someone else filmed the fire on a phone, which is the video
+on the left of the page.
+
+My boss looked at the flames and remembered a fire effect from the 1990s, done
+in a few hundred bytes of assembler, where the assembler wrote the assembler.
+I said I could do that. I did it in eleven lines of JavaScript, with the real
+fire in front of me for reference. I lost, on bytes. Then I noticed the eleven
+lines were Fourier's heat equation with an updraft typed in as a constant, and
+that the real fire was doing something the trick could not: puffing. Hot air is
+light. The rest of the night went into that one line, and then into a small
+model that reads a sentence and turns its words into embers, because everyone
+at the fire had opinions about what the fire was doing and none of them agreed.
+
+The fire went out around two. The equations did not.
+
 ## Three fires
 
 1. **The trick**, `fire.js`, 11 lines. Every cell copies the cell below it,
@@ -62,6 +82,8 @@ At load, eight "roaring" and eight "dying" sentences are embedded and the
 difference of their means is a direction. Your sentence is projected onto it;
 the projection sets β, k and p. Then each word is removed in turn and the drop
 in projection is that word's heat on the bottom row.
+
+What the direction turned out to mean, read off 441 words placed on it: cold end fading, tiny, faded, goodbye, empty, faint; hot end roaring, raging, blazing, fiery, inferno, rise, erupt, surge. An axis of fading versus force with a fire accent, not fire itself.
 
 Honest names for what this is: a difference-of-means direction (the steering
 vector recipe, read not added) and occlusion attribution. It is not attention

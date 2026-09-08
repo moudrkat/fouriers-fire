@@ -87,6 +87,10 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .dict{background:var(--panel);border:1px solid var(--rule);padding:12px 14px;display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12px;align-items:baseline}
 .dict .w{font-variant-numeric:tabular-nums;white-space:nowrap}
 .dict .w small{color:var(--muted);margin-left:3px}
+.dict .lab{flex-basis:100%;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.own{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.own input{background:var(--panel);border:1px solid var(--rule);color:var(--ink);font:14px var(--mono);padding:8px 10px;min-width:12em}
+.own input:focus-visible{outline:none;border-color:var(--phys)}
 footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;width:100%;margin:0 auto}
 </style>
 </head>
@@ -131,7 +135,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
 
   <section class="how">
     <h2>How it works</h2>
-    <p>Your sentence becomes 384 numbers. They land somewhere on the line between "roaring" and "embers". Where they land is the size of the fire. Remove a word, measure the drop: that is the word's heat.</p>
+    <p>Sentence → 384 numbers → one number on the embers→inferno line → the fire. Remove a word: its heat.</p>
     <details><summary>the steps</summary><ul>
       <li>The model turns any sentence into 384 numbers. Sentences that mean similar things land close together.</li>
       <li>At load it does that for 16 "roaring" sentences and 16 "dying" ones. Their two averages are two points; the line between them is the scale, −1 to +1.</li>
@@ -170,7 +174,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     </ul></details>
 
     <h2>What the model is</h2>
-    <p><b>all-MiniLM-L6-v2</b>. A small BERT-style encoder. It cannot answer, only place sentences in space.</p>
+    <p><b>all-MiniLM-L6-v2</b>, 22.7 M parameters, 23 MB, in your tab. It cannot answer, only place.</p>
     <details><summary>the specifics</summary><ul>
       <li>6 transformer layers, 384 hidden units, 12 attention heads, 22.7 million parameters.</li>
       <li>Distilled from Microsoft's MiniLM; fine-tuned by the sentence-transformers team on about a billion sentence pairs so that paraphrases land close together.</li>
@@ -178,10 +182,15 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <li>Runs here as an 8-bit ONNX export, 23 MB, on WebAssembly, in your tab. Nothing you type leaves it.</li>
     </ul></details>
 
-    <h2>Interpretability, the part you can check</h2>
-    <p>Forty single words, placed on the same line by the model, coldest to hottest. This is what the direction means in the model's own terms.</p>
+    <h2>What the direction means</h2>
+    <p>441 words placed on the line by the model. Coldest and hottest thirty; the rest below.</p>
     <div class="dict" id="dict"><span style="color:var(--muted)">waiting for the model…</span></div>
+    <details><summary>all 441 words, coldest to hottest</summary><div class="dict" id="dictall"></div></details>
+    <form class="own" id="ownform"><input type="text" id="own" placeholder="place your own word" autocomplete="off" aria-label="Place your own word on the line"><button type="submit" class="btn">Place</button><span class="say" id="ownsay"></span></form>
     <details><summary>what this is, and what it is not</summary><ul>
+      <li>The direction is not made from these words. It is the difference between the average of 16 "roaring" sentences and 16 "dying" ones (they are in <code>probe.js</code>). The words only describe it afterwards.</li>
+      <li>What it turned out to be, read off the 441 words: the cold end is fading, tiny, faded, goodbye, empty, faint; the hot end is roaring, raging, blazing, fiery, inferno, rise, erupt, surge. So it is an axis of fading versus force, with a fire accent, not "fire" itself. "goodbye" is cold and "surge" is hot without any fire in them.</li>
+      <li>Half the words are about fire, half are everyday words, so you can see exactly that. Where a word surprises you, that is the model, not the page.</li>
       <li>The direction is a difference of means: the recipe for a steering vector (contrastive activation addition). People add it to a model to change what it says. Here it is only read.</li>
       <li>Per-word heat is occlusion: remove the word, watch the score. Zeiler &amp; Fergus, 2014. Not attention: the exported model does not expose attention weights, and a heat you can remove and watch go out is easier to believe.</li>
       <li>Measured on 40 held-out sentences: 30 right, chance 20. Big fires 11/20, embers 19/20. <a href="eval.html">The eval runs in your browser.</a></li>
@@ -189,9 +198,9 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     </ul></details>
 
     <h2>The 1990s fire, x86 assembler</h2>
-    <p>A few hundred bytes. Every pixel becomes the average of the ones below it, minus a loss. Fourier's heat equation with the updraft typed in as a constant. It cannot puff: nothing in it knows that hot air is light.</p>
+    <p>145 bytes. Fourier's heat equation with the updraft typed in as a constant. It cannot puff.</p>
     <div class="dos"><div id="dos"></div><button class="btn" id="dosbtn">Run FIRE.COM in DOSBox, in your browser</button><span class="say" id="dossay">145 bytes of 8086, assembled with GNU as. ESC quits.</span></div>
-    <details><summary>the inner loop</summary><pre># the equation, one cell at a time, for every cell from row 1 down to row 199.
+    <details><summary>the inner loop</summary><ul><li>Every pixel becomes the average of the ones below it, minus a loss. A few hundred bytes was the 1990s norm; this one is 145. Nothing in it knows that hot air is light, so nothing in it can puff.</li></ul><pre># the equation, one cell at a time, for every cell from row 1 down to row 199.
 # T(x, y-1)  &lt;-  ( T(x-1,y) + T(x+1,y) + T(x,y+1) + T(x,y+2) ) / 4  -  loss
 #   the two side neighbours   = diffusion, D d2T/dx2
 #   reading below, writing above = the updraft, v dT/dy, at one row per frame
@@ -221,8 +230,8 @@ cell:   xor     ax, ax
     </ul></details>
 
     <h2>The equations, JavaScript</h2>
-    <p>Ninety lines. One line adds "hot air is light". Then the air must stay incompressible, so a pressure solve. Then the heat rides the air. That is the whole difference.</p>
-    <details><summary>the lines that matter</summary><pre>// buoyancy: hot air is light. This single line is what the 1990s trick does not have.
+    <p>Ninety lines. One of them says hot air is light. It puffs.</p>
+    <details><summary>the lines that matter</summary><ul><li>One line adds buoyancy. Then the air must stay incompressible, so a pressure solve. Then the heat rides the air. That is the whole difference between the trick and a fire.</li></ul><pre>// buoyancy: hot air is light. This single line is what the 1990s trick does not have.
 for (let i = 0; i &lt; N; i++) v[i] -= K.beta * T[i];
 // advect velocity by itself
 for (let y = 0; y &lt; H; y++) for (let x = 0; x &lt; W; x++) { const i = y * W + x; u2[i] = sample(u, x - u[i], y - v[i]); v2[i] = sample(v, x - u[i], y - v[i]); }
@@ -348,10 +357,20 @@ async function load(){
     say('finding the embers→inferno direction from 32 sentences…',true);
     probe=await makeProbe(async t=>Array.from((await fe(t,{pooling:'mean',normalize:true})).data));
     showBar(null);say('ready. Type, and the embers follow the words.');run();
-    const WORDS=['inferno','blaze','roaring','bonfire','flames','sparks','heat','wood','logs','kindling','smoke','fire','burning','warm','glow','flicker','embers','coals','ash','smouldering','dying','cold','out','dark','night','small','big','more','less','up','down','quiet','wild','calm','gentle','fierce','hungry','fed','tiny','huge'];
-    const placed=[];for(const w of WORDS)placed.push([w,await probe.score(w)]);placed.sort((a,b)=>a[1]-b[1]);
+    const WORDS=await (await fetch('words.json')).json();
+    const colour=t=>t>.5?`rgb(${Math.round(160+95*(t-.5)*2)},${Math.round(120+80*(t-.5)*2)},${Math.round(90-40*(t-.5)*2)})`:`rgb(${Math.round(78+82*t*2)},${Math.round(143-23*t*2)},${Math.round(203-113*t*2)})`;
+    const placed=[];const dictEl=document.getElementById('dict');
+    for(let i=0;i<WORDS.length;i++){placed.push([WORDS[i],await probe.score(WORDS[i])]);if(i%40===0)dictEl.innerHTML=`<span style="color:var(--muted)">placing words… ${i} of ${WORDS.length}</span>`;}
+    placed.sort((a,b)=>a[1]-b[1]);
     const lo=placed[0][1],hi=placed[placed.length-1][1];
-    document.getElementById('dict').innerHTML=placed.map(([w,v])=>{const t=(v-lo)/(hi-lo||1);const col=t>.5?`rgb(${Math.round(160+95*(t-.5)*2)},${Math.round(120+80*(t-.5)*2)},${Math.round(90-40*(t-.5)*2)})`:`rgb(${Math.round(78+82*t*2)},${Math.round(143-23*t*2)},${Math.round(203-113*t*2)})`;return `<span class="w" style="color:${col}">${w}<small>${f2(v)}</small></span>`;}).join('');
+    const chip=([w,v])=>`<span class="w" style="color:${colour((v-lo)/(hi-lo||1))}">${w}<small>${f2(v)}</small></span>`;
+    dictEl.innerHTML=`<span class="lab">coldest 30</span>`+placed.slice(0,30).map(chip).join('')+`<span class="lab">hottest 30</span>`+placed.slice(-30).map(chip).join('');
+    document.getElementById('dictall').innerHTML=placed.map(chip).join('');
+    window.__placed=placed;
+    document.getElementById('ownform').addEventListener('submit',async e=>{e.preventDefault();const w=document.getElementById('own').value.trim();if(!w)return;
+      const v=await probe.score(w);let k=placed.findIndex(x=>x[1]>v);if(k<0)k=placed.length;
+      const below=k>0?placed[k-1][0]:null,above=k<placed.length?placed[k][0]:null;
+      document.getElementById('ownsay').innerHTML=`<b>${esc(w)}</b> lands at <b>${f2(v)}</b>${below?', just above <b>'+below+'</b>':''}${above?', below <b>'+above+'</b>':''}`;});
   }catch(e){showBar(null);say('could not load the model: '+String(e).slice(0,140)+'. The slider still works.');}
 }
 const esc=t=>t.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
