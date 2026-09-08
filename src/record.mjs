@@ -14,7 +14,7 @@ try {
   page.on('pageerror', e => console.log('pageerror', String(e).slice(0, 200)));
   await page.goto('http://localhost:8791/record.html', { waitUntil: 'load' });
   await page.waitForFunction(() => window.__ready === true, { timeout: 240000 });
-  await page.waitForFunction(() => document.getElementById('video').readyState >= 2, { timeout: 60000 });
+  await page.waitForFunction(() => document.getElementById('video').readyState >= 1, { timeout: 60000 });
   let n = 0;
   const S = (obj) => page.evaluate(o => Object.assign(window.__S, o), obj);
   async function run(frames) {

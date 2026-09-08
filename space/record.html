@@ -4,7 +4,7 @@
 <style>html,body{margin:0;background:#000;overflow:hidden}canvas#comp{display:block;width:1080px;height:1350px}</style>
 </head><body>
 <canvas id="comp" width="1080" height="1350"></canvas>
-<video id="video" src="sample.mp4" muted loop playsinline autoplay style="position:fixed;left:-9999px;width:480px"></video>
+<video id="video" muted playsinline preload="auto" style="position:fixed;left:-9999px;width:480px"></video>
 <script>// A fire with physics in it.
 //
 //   du/dt + (u·∇)u = −∇p + β T ŷ + ε (N × ω)      momentum, with hot air lighter than cold (Boussinesq 1903)
@@ -90,8 +90,9 @@ if (typeof module !== 'undefined') module.exports = { makeFluid };
 import { MODEL_ID, makeProbe, words as splitWords } from './probe.js';
 const W=1080,H=1350,SCENE=860,EQ=230,TXT=H-SCENE-EQ;
 const comp=document.getElementById('comp'),ctx=comp.getContext('2d');
-const video=document.getElementById('video');video.play().catch(()=>{});
-fetch('sample.mp4').then(r=>r.blob()).then(b=>{if(!video.currentTime){video.src=URL.createObjectURL(b);video.play().catch(()=>{});}}).catch(()=>{});
+const video=document.getElementById('video');video.pause();
+// a blob, always: a plain URL from a server without Range support cannot be seeked
+await new Promise(async res=>{const b=await (await fetch('sample.mp4')).blob();video.onloadedmetadata=()=>res();video.src=URL.createObjectURL(b);});
 // palette + fluid, same as the page
 const PAL=new Uint8ClampedArray(256*4);
 { const stops=[[0,[0,0,0]],[.18,[70,4,0]],[.36,[190,30,0]],[.55,[245,110,10]],[.75,[255,200,60]],[.9,[255,240,180]],[1,[255,255,255]]];
