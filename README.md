@@ -91,7 +91,7 @@ and it is not an LLM.
 
 ## Live
 
-https://huggingface.co/spaces/Unt1l1f1nd/fouriers-fire — a static Space. `space/index.html` is the easy UI: two fires, the sentence box with an Ask button, a hand slider from embers to inferno, and two download buttons (an 8 s webm of both fires with the sentence, or a PNG still). `space/about.html` is the whole page. Edit `space/index.src.html`, not `space/index.html`. Rebuild and redeploy:
+https://huggingface.co/spaces/Unt1l1f1nd/fouriers-fire — a static Space. `space/index.html` is the easy UI: two fires, the sentence box with an Ask button, a hand slider from embers to inferno. `space/about.html` is the whole page. Edit `space/index.src.html`, not `space/index.html`. Rebuild and redeploy:
 
 ```
 cd space && python3 -c "import pathlib;s=pathlib.Path('index.src.html').read_text();pathlib.Path('index.html').write_text(s.replace('__FLUID_JS__',pathlib.Path('../fluid.js').read_text()))"

@@ -53,8 +53,6 @@ input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px
 .verdict .c-beta{color:rgb(255,140,60)}.verdict .c-k{color:rgb(110,170,235)}.verdict .c-p{color:rgb(255,210,90)}
 .say b{color:var(--ink);font-weight:500}
 .bar{height:2px;background:var(--rule);display:none}.bar.on{display:block}.bar i{display:block;height:100%;background:var(--phys);width:0}
-.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.actions .say{flex:1;min-width:12em}
 
 /* how it works */
 .all{margin-top:18px;border-top:1px solid var(--rule);padding-top:10px}
@@ -140,11 +138,6 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <div class="row"><span>embers</span><input type="range" id="size" min="-1.5" max="1.5" step="0.01" value="0" aria-label="Fire size, from embers to inferno"><span>inferno</span></div>
   </div>
 
-  <div class="actions">
-    <button class="btn" id="rec">Download 8 s clip</button>
-    <button class="btn" id="snap">Download a still</button>
-    <span class="say" id="recsay">webm, both fires side by side, with your sentence</span>
-  </div>
 
   <details class="all"><summary>how it works, the equations, the model, the assembler, the evals</summary>
   <section class="how">
@@ -501,32 +494,6 @@ function strip(id,vec){const c=document.getElementById(id),g=c.getContext('2d'),
   for(let i=0;i<vec.length;i++){const t=vec[i]/(m||1),o=4*i;if(t>=0){img.data[o]=224*t+20;img.data[o+1]=86*t+20;img.data[o+2]=31*t+20;}else{img.data[o]=78*-t+20;img.data[o+1]=143*-t+20;img.data[o+2]=203*-t+20;}img.data[o+3]=255;}
   g.putImageData(img,0,0);}
 
-// ---------- download: an 8 s clip of both fires, or a still ----------
-const comp=document.createElement('canvas');comp.width=1280;comp.height=720;const cg=comp.getContext('2d');
-function compose(){
-  cg.fillStyle='#0B0907';cg.fillRect(0,0,1280,720);
-  cg.fillStyle='#000';cg.fillRect(0,0,640,360);
-  try{const vw=video.videoWidth||16,vh=video.videoHeight||9,sc=Math.max(640/vw,360/vh),dw=vw*sc,dh=vh*sc;cg.drawImage(video,(640-dw)/2,(360-dh)/2,dw,dh);}catch(e){}
-  cg.drawImage(fc,640,0,640,360);
-  cg.font='500 12px "IBM Plex Mono",monospace';cg.fillStyle='#B5A48E';cg.textAlign='left';cg.fillText('REAL FIRE',14,22);cg.fillText('EQUATIONS',654,22);
-  if(lastWords){const x0=640+640*.12,span=640*.76/lastWords.length;cg.textAlign='center';lastWords.forEach((w,i)=>{const h=Math.max(.15,Math.min(1,.6+.25*lastS+1.8*lastShares[i]));cg.fillStyle=wordColor(h,lastShares[i]);cg.fillText(w,x0+(i+.5)*span,350,span-4);});cg.textAlign='left';}
-  cg.fillStyle='#EDE3D3';cg.font='400 40px "Instrument Serif",Georgia,serif';cg.fillText(document.getElementById('ask').value,40,440,1200);
-  cg.fillStyle='#B5A48E';cg.font='400 14px "IBM Plex Mono",monospace';cg.fillText('∂u/∂t + (u·∇)u = −∇p + βT ŷ      ∂T/∂t + (u·∇)T = −kT      ∇·u = 0',40,500);
-  cg.fillStyle='#7D6E5C';cg.font='400 14px "IBM Plex Mono",monospace';cg.fillText('left: a campfire · right: Navier–Stokes with "hot air is light" · the embers are the words · Fourier\'s Fire on Hugging Face',40,690,1200);
-}
-const recsay=document.getElementById('recsay');
-function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);}
-document.getElementById('snap').addEventListener('click',()=>{compose();comp.toBlob(b=>{save(b,'fouriers-fire.png');recsay.textContent='saved fouriers-fire.png';},'image/png');});
-document.getElementById('rec').addEventListener('click',()=>{
-  const btn=document.getElementById('rec');if(btn.disabled)return;btn.disabled=true;
-  const stream=comp.captureStream(30);
-  const type=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t))||'';
-  const mr=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:6e6});const chunks=[];
-  mr.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
-  mr.onstop=()=>{clearInterval(tick);save(new Blob(chunks,{type:'video/webm'}),'fouriers-fire.webm');recsay.textContent='saved fouriers-fire.webm · 1280×720, 8 s';btn.disabled=false;};
-  const t0=performance.now();const tick=setInterval(()=>{compose();recsay.textContent='recording… '+((performance.now()-t0)/1000).toFixed(1)+' s';},1000/30);
-  mr.start(200);setTimeout(()=>mr.stop(),8000);
-});
 </script>
 <script type="module">
 import { MODEL_ID, makeProbe, words as splitWords } from './probe.js';
