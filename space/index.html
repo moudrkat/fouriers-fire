@@ -228,7 +228,7 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <div class="dos"><div id="dos"></div><button class="btn" id="dosbtn">Run FIRE.COM in DOSBox, in your browser</button><span class="say" id="dossay">153 bytes of 8086, assembled with GNU as. ESC quits. <a href="dos.html" target="_blank" rel="noopener">Or open it in its own tab.</a></span></div>
     <details><summary>the whole program, fire.s</summary><ul>
       <li>Every pixel becomes the average of the ones below it, minus a loss. Nothing in it knows that hot air is light, so nothing in it can puff.</li>
-      <li>This is the readable version, 70 instructions with comments, 153 bytes assembled. It is not golfed. The 1990s 256-byte intros did the same fire, palette included, in about a hundred bytes, with tricks this file does not use.</li>
+      <li>This is the readable version, 70 instructions with comments, 153 bytes assembled. It is not golfed. The 1996 #coders 256 Byte Fire Compo had entries doing this in under 256 bytes; today it is done in 64. This file uses none of those tricks.</li>
       <li>Build: <code>as --32 fire.s -o fire.o &amp;&amp; ld -m elf_i386 -Ttext=0x100 --oformat binary fire.o -o FIRE.COM</code>. Run: <code>dosbox FIRE.COM</code>, or the button above. If the button shows a black box and nothing else, <a href="dos.html" target="_blank" rel="noopener">open DOSBox in its own tab</a>.</li>
     </ul><pre># FIRE.COM -- the heat equation for a 486, in real mode, straight into video memory.
 #

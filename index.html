@@ -170,7 +170,7 @@ footer{padding:36px 0 60px;color:var(--muted);font:12px/1.6 var(--mono);border-t
     </div>
     <div class="two">
       <div class="prose">
-        <p>That is the whole 1990s effect, the one that fit in a few hundred bytes of assembler. Random embers on the bottom row, and each frame every cell looks one row down and a random step sideways, averages with its neighbours, and loses a little heat. Colour is a lookup from black through red and yellow to white.</p>
+        <p>That is the whole 1990s effect, the one that fit in under 256 bytes of assembler. Random embers on the bottom row, and each frame every cell looks one row down and a random step sideways, averages with its neighbours, and loses a little heat. Colour is a lookup from black through red and yellow to white.</p>
         <p>Written as a limit, "look one row down" is an advection term <em>v ∂T/∂y</em>, "a random step, then average" is Fourier's diffusion <em>D ∂²T/∂x²</em>, and "lose a little" is decay <em>−kT</em>. The demo coders were solving the heat equation from 1822 by finite differences at sixty frames a second on a 486, and calling it a trick.</p>
         <p>What it does not have is a reason to go up. The updraft <em>v</em> is a constant the coder typed in. In a real fire the air rises because it is hot, and that one fact, hot air is light, is where all the flicker comes from. So the fire at the top of this page adds it: a velocity field pushed upward by temperature, kept incompressible, carrying the heat with it. Navier–Stokes with the Boussinesq approximation, solved the way Jos Stam did it in 1999.</p>
       </div>
@@ -257,7 +257,7 @@ footer{padding:36px 0 60px;color:var(--muted);font:12px/1.6 var(--mono);border-t
     <div class="head">
       <span class="eyebrow">The trick, in full</span>
       <h2>This is the entire 1990s fire, including drawing it.</h2>
-      <p class="lede">The originals were a few hundred bytes of x86 assembler, and the trick was often code that wrote the inner loop for itself. This is the same loop in JavaScript. The version with physics is <code>fluid.js</code>, about ninety lines, and it is not a trick.</p>
+      <p class="lede">The originals were under 256 bytes of x86 assembler, and the trick was often code that wrote the inner loop for itself. This is the same loop in JavaScript. The version with physics is <code>fluid.js</code>, about ninety lines, and it is not a trick.</p>
     </div>
 <pre id="src"></pre>
     <div class="count" id="count"></div>
