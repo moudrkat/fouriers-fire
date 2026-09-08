@@ -25,5 +25,4 @@ heat equation, the fit against the campfire, the flicker spectrum, and what the
 model is honestly doing (a difference-of-means direction, read not added, and
 occlusion per word; not attention, not an LLM).
 
-Source and post: the `fire` folder in the author's projects; nothing you type
-or upload leaves the tab.
+Source: https://github.com/moudrkat/fouriers-fire. Nothing you type or upload leaves the tab.
