@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>record</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>html,body{margin:0;background:#000;overflow:hidden}canvas#comp{display:block;width:1080px;height:1350px}</style>
+</head><body>
+<canvas id="comp" width="1080" height="1350"></canvas>
+<video id="video" src="sample.mp4" muted loop playsinline autoplay style="position:fixed;left:-9999px;width:480px"></video>
+<script>// A fire with physics in it.
+//
+//   du/dt + (u·∇)u = −∇p + β T ŷ + ε (N × ω)      momentum, with hot air lighter than cold (Boussinesq 1903)
+//   ∇·u = 0                                        the air is incompressible
+//   dT/dt + (u·∇)T = −k T                           heat is carried by the air and radiated away
+//
+// Solved the way Jos Stam did it in 1999: semi-Lagrangian advection, a Jacobi
+// pressure solve, one step per frame, unconditionally stable. Velocities are in
+// cells per frame. y grows downward in the array, so "up" is −v.
+// Embers on the bottom rows are the boundary condition; everything above them is
+// the equations.
+function makeFluid(W, H) {
+  const N = W * H;
+  const u = new Float32Array(N), v = new Float32Array(N), u2 = new Float32Array(N), v2 = new Float32Array(N);
+  const T = new Float32Array(N), T2 = new Float32Array(N), p = new Float32Array(N), div = new Float32Array(N), curl = new Float32Array(N);
+  const ember = new Float32Array(W);
+  const K = { beta: 0.06, k: 0.045, p: 0.55, eps: 0.35, iters: 16 };
+  let mean = 0, maxT = 1;
+
+  function sample(f, x, y) {
+    x = x < 0 ? 0 : x > W - 1.001 ? W - 1.001 : x;
+    y = y < 0 ? 0 : y > H - 1.001 ? H - 1.001 : y;
+    const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * W + x0;
+    return (f[i] * (1 - fx) + f[i + 1] * fx) * (1 - fy) + (f[i + W] * (1 - fx) + f[i + W + 1] * fx) * fy;
+  }
+  function bnd(f, kind) {            // kind: 'u' side walls kill u, 'v' floor kills v, top is open, 'p' Neumann
+    for (let y = 0; y < H; y++) { f[y * W] = kind === 'u' ? 0 : f[y * W + 1]; f[y * W + W - 1] = kind === 'u' ? 0 : f[y * W + W - 2]; }
+    for (let x = 0; x < W; x++) { f[x] = f[W + x]; f[(H - 1) * W + x] = kind === 'v' ? 0 : f[(H - 2) * W + x]; }
+  }
+
+  function step() {
+    // boundary condition: embers on the bottom rows, in the middle half, each one hot or cold, slowly changing
+    // If someone has given the fire words, `heat` holds one target per column and the
+    // embers flicker around it; otherwise they are random in the middle half.
+    const x0 = W * 0.22 | 0, x1 = W * 0.78 | 0;
+    if (api.heat) { for (let x = 0; x < W; x++) if (Math.random() < 0.15) ember[x] = Math.random() < 0.15 + 0.85 * api.heat[x] ? api.heat[x] * (0.75 + 0.25 * Math.random()) : 0; }
+    else for (let x = 0; x < W; x++) if (Math.random() < 0.04) ember[x] = (x >= x0 && x < x1 && Math.random() < K.p) ? 0.7 + 0.3 * Math.random() : 0;
+    for (let y = H - 3; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (ember[x] > T[i]) T[i] = ember[x]; }
+
+    // buoyancy: hot air is light. This single line is what the 1990s trick does not have.
+    for (let i = 0; i < N; i++) v[i] -= K.beta * T[i];
+
+    // vorticity confinement: put back the small swirls the coarse grid smears away
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; curl[i] = 0.5 * ((v[i + 1] - v[i - 1]) - (u[i + W] - u[i - W])); }
+    for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+      const i = y * W + x;
+      let dx = Math.abs(curl[i + 1]) - Math.abs(curl[i - 1]), dy = Math.abs(curl[i + W]) - Math.abs(curl[i - W]);
+      const l = Math.sqrt(dx * dx + dy * dy) + 1e-5; dx /= l; dy /= l;
+      u[i] += K.eps * dy * curl[i]; v[i] -= K.eps * dx * curl[i];
+    }
+
+    // advect velocity by itself
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; u2[i] = sample(u, x - u[i], y - v[i]); v2[i] = sample(v, x - u[i], y - v[i]); }
+    bnd(u2, 'u'); bnd(v2, 'v');
+
+    // make it incompressible: solve ∇²p = ∇·u, subtract ∇p
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; div[i] = 0.5 * (u2[i + 1] - u2[i - 1] + v2[i + W] - v2[i - W]); p[i] = 0; }
+    for (let it = 0; it < K.iters; it++) {
+      for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; p[i] = (p[i - 1] + p[i + 1] + p[i - W] + p[i + W] - div[i]) * 0.25; }
+      bnd(p, 'p');
+    }
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; u[i] = u2[i] - 0.5 * (p[i + 1] - p[i - 1]); v[i] = v2[i] - 0.5 * (p[i + W] - p[i - W]); }
+    bnd(u, 'u'); bnd(v, 'v');
+
+    // carry the heat with the air, and let it cool
+    let sum = 0, mx = 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x; const t = sample(T, x - u[i], y - v[i]) * (1 - K.k);
+      T2[i] = t; sum += t; if (t > mx) mx = t;
+    }
+    T.set(T2); mean = sum / N; maxT = mx;
+  }
+  const api = {
+    K, T, W, H, step, heat: null,
+    mean: () => mean,
+    rows: () => { const r = new Float32Array(H); for (let y = 0; y < H; y++) { let s = 0; for (let x = 0; x < W; x++) s += T[y * W + x]; r[y] = s / W; } return r; },
+  };
+  return api;
+}
+if (typeof module !== 'undefined') module.exports = { makeFluid };
+</script>
+<script type="module">
+import { MODEL_ID, makeProbe, words as splitWords } from './probe.js';
+const W=1080,H=1350,SCENE=860,EQ=230,TXT=H-SCENE-EQ;
+const comp=document.getElementById('comp'),ctx=comp.getContext('2d');
+const video=document.getElementById('video');video.play().catch(()=>{});
+fetch('sample.mp4').then(r=>r.blob()).then(b=>{if(!video.currentTime){video.src=URL.createObjectURL(b);video.play().catch(()=>{});}}).catch(()=>{});
+// palette + fluid, same as the page
+const PAL=new Uint8ClampedArray(256*4);
+{ const stops=[[0,[0,0,0]],[.18,[70,4,0]],[.36,[190,30,0]],[.55,[245,110,10]],[.75,[255,200,60]],[.9,[255,240,180]],[1,[255,255,255]]];
+  for(let i=0;i<256;i++){const t=i/255;let a=stops[0],b=stops[1];for(let s=1;s<stops.length;s++){if(t<=stops[s][0]){a=stops[s-1];b=stops[s];break;}}
+    const f=(t-a[0])/(b[0]-a[0]||1);for(let c=0;c<3;c++)PAL[4*i+c]=a[1][c]+(b[1][c]-a[1][c])*f;PAL[4*i+3]=255;} }
+const FW=320,FH=180,fluid=makeFluid(FW,FH);Object.assign(fluid.K,{beta:.5,k:.025,eps:.3,p:.55});
+const off=document.createElement('canvas');off.width=FW;off.height=FH;const og=off.getContext('2d'),img=og.createImageData(FW,FH);
+const glowc=document.createElement('canvas');glowc.width=W;glowc.height=SCENE/2;const gg=glowc.getContext('2d');
+const S={prompt:'',caret:true,status:'',values:'',words:null,shares:null,s:0,title:'',hot:'',thinking:false,end:false};
+const f2=v=>(v>=0?'+':'')+v.toFixed(2);
+const mix=(a,b,t)=>Math.round(a+(b-a)*t);
+const termColor=(t,rgb)=>`rgb(${mix(125,rgb[0],t)},${mix(110,rgb[1],t)},${mix(92,rgb[2],t)})`;
+function eqLine(y,base,term,t,rgb,label){
+  ctx.font='400 44px "Instrument Serif",Georgia,serif';ctx.textBaseline='middle';ctx.textAlign='left';
+  const bw=ctx.measureText(base).width,tw=ctx.measureText(term).width,x=(W-bw-tw)/2;
+  ctx.fillStyle='#7D6E5C';ctx.shadowBlur=0;ctx.fillText(base,x,y);
+  ctx.fillStyle=termColor(t,rgb);ctx.shadowColor=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${(0.15+0.75*t).toFixed(2)})`;ctx.shadowBlur=t>.05?4+30*t:0;
+  ctx.fillText(term,x+bw,y);ctx.shadowBlur=0;
+  ctx.font='500 15px "IBM Plex Mono",monospace';ctx.fillStyle=termColor(t,rgb);ctx.globalAlpha=.8;ctx.fillText(label,x+bw+tw+14,y+2);ctx.globalAlpha=1;
+}
+function frame(){
+  fluid.step();
+  const p=img.data,T=fluid.T;for(let i=0;i<FW*FH;i++){const c=4*Math.min(255,T[i]*255|0);p[4*i]=PAL[c];p[4*i+1]=PAL[c+1];p[4*i+2]=PAL[c+2];p[4*i+3]=255;}
+  og.putImageData(img,0,0);
+  ctx.fillStyle='#0B0907';ctx.fillRect(0,0,W,H);
+  // scene: real fire on top, equations' fire below, each 1080x430
+  const half=SCENE/2;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,SCENE);
+  try{const vw=video.videoWidth||16,vh=video.videoHeight||9,sc=Math.max(W/vw,half/vh),dw=vw*sc,dh=vh*sc;ctx.save();ctx.beginPath();ctx.rect(0,0,W,half);ctx.clip();ctx.drawImage(video,(W-dw)/2,(half-dh)/2,dw,dh);ctx.restore();}catch(e){}
+  // sim: scale 320x180 -> 1080x608, show the bottom 430 px
+  const sw=W,sh=W*FH/FW,sy=half+half-sh;
+  ctx.save();ctx.beginPath();ctx.rect(0,half,W,half);ctx.clip();
+  ctx.imageSmoothingEnabled=true;ctx.drawImage(off,0,sy,sw,sh);
+  gg.clearRect(0,0,W,half);gg.filter='blur(16px)';gg.drawImage(off,0,sy-half,sw,sh);gg.filter='none';
+  ctx.globalAlpha=.3;ctx.globalCompositeOperation='screen';ctx.drawImage(glowc,0,half);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+  ctx.restore();
+  ctx.font='500 15px "IBM Plex Mono",monospace';ctx.textBaseline='alphabetic';ctx.textAlign='left';
+  ctx.fillStyle='#B5A48E';ctx.fillText('REAL FIRE',24,34);ctx.fillText('EQUATIONS',24,half+34);
+  if(S.title){ctx.font='400 22px "IBM Plex Mono",monospace';ctx.fillStyle='#B5A48E';ctx.textAlign='right';ctx.fillText(S.title,W-24,34);ctx.textAlign='left';}
+  // words as embers under the sim
+  if(S.words){const x0=W*.12,span=W*.76/S.words.length;ctx.font='500 22px "IBM Plex Mono",monospace';ctx.textAlign='center';
+    S.words.forEach((w,i)=>{const h=Math.max(.15,Math.min(1,.6+.25*S.s+1.8*S.shares[i]));ctx.fillStyle=S.shares[i]<-.05?'#4E8FCB':`rgb(${Math.max(125,Math.round(255*h))},${Math.round(110+120*h*h)},${Math.round(92+40*h)})`;ctx.shadowColor='#000';ctx.shadowBlur=8;ctx.fillText(w,x0+(i+.5)*span,SCENE-16,span-6);});ctx.shadowBlur=0;ctx.textAlign='left';}
+  // equations, glowing by the constants
+  const K=fluid.K,ey=SCENE+EQ/2;
+  eqLine(ey-70,'∂u/∂t + (u·∇)u = −∇p + ','βTŷ',(K.beta-.05)/1.15,[255,140,60],'buoyancy '+K.beta.toFixed(2));
+  eqLine(ey,'∂T/∂t + (u·∇)T = −','kT',(K.k-.005)/.095,[110,170,235],'cooling '+K.k.toFixed(3));
+  eqLine(ey+70,'T(x, bottom) = ','embers(x)',(K.p-.05)/.95,[255,210,90],'ember density '+K.p.toFixed(2)+(S.hot?' · hottest: '+S.hot:''));
+  // text band
+  const ty=SCENE+EQ;ctx.fillStyle='#0B0907';ctx.fillRect(0,ty,W,TXT);
+  ctx.textBaseline='top';
+  if(S.end){ctx.font='400 54px "Instrument Serif",Georgia,serif';ctx.fillStyle='#EDE3D3';ctx.textAlign='center';ctx.fillText("Fourier's Fire",W/2,ty+40);
+    ctx.font='400 26px "IBM Plex Mono",monospace';ctx.fillStyle='#B5A48E';ctx.fillText('the embers are your words · hf.co/spaces/Unt1l1f1nd/fouriers-fire',W/2,ty+118);ctx.textAlign='left';}
+  else{
+    ctx.font='400 46px "Instrument Serif",Georgia,serif';ctx.fillStyle='#EDE3D3';
+    ctx.fillText(S.prompt+((S.caret&&!S.thinking&&Math.floor(performance.now()/500)%2===0)?'|':''),60,ty+34);
+    ctx.font='400 24px "IBM Plex Mono",monospace';ctx.fillStyle=S.thinking?'#7D6E5C':'#B5A48E';ctx.fillText(S.status,60,ty+108);
+    if(S.values){ctx.font='400 22px "IBM Plex Mono",monospace';ctx.fillStyle='#7D6E5C';ctx.fillText(S.values,60,ty+152);}
+  }
+  requestAnimationFrame(frame);
+}
+await document.fonts.ready;
+frame();
+// model
+let probe=null;
+const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
+const fe=await pipeline('feature-extraction',MODEL_ID,{dtype:'q8'});
+probe=await makeProbe(async t=>Array.from((await fe(t,{pooling:'mean',normalize:true})).data));
+window.__ready=true;
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function setSize(s){s=Math.max(-1.5,Math.min(1.5,s));fluid.K.p=Math.max(.05,Math.min(1,.55+.3*s));fluid.K.beta=Math.max(.05,Math.min(1.2,.5*(1+.45*s)));fluid.K.k=Math.max(.005,Math.min(.1,.025*(1-.3*s)));}
+function applyWords(words,shares,s){S.words=words;S.shares=shares;S.s=s;const heat=new Float32Array(FW),x0=FW*.12,span=FW*.76/words.length;
+  words.forEach((w,i)=>{const h=Math.max(.15,Math.min(1,.6+.25*s+1.8*shares[i]));for(let x=Math.round(x0+i*span);x<Math.round(x0+(i+1)*span)-1;x++)heat[x]=h;});fluid.heat=heat;
+  S.hot=words[shares.indexOf(Math.max(...shares))];}
+async function type(t){S.prompt='';S.status='';S.values='';for(const c of t){S.prompt+=c;await wait(36);}await wait(200);}
+async function read(){const w=splitWords(S.prompt);S.thinking=true;S.status='reading it, in your browser…';const t0=performance.now();
+  const {full,shares}=await probe.shares(w);await wait(Math.max(0,550-(performance.now()-t0)));S.thinking=false;
+  const s=Math.max(-1.5,Math.min(1.5,full));applyWords(w,shares,s);setSize(s);
+  S.status=`the model read ${f2(full)} on embers→inferno · hottest word: ${S.hot}`;
+  S.values=`β ${fluid.K.beta.toFixed(2)} · k ${fluid.K.k.toFixed(3)} · embers ${fluid.K.p.toFixed(2)} · no keywords, no rules`;}
+window.__run=async()=>{
+  S.title='a campfire, 7 September 2026';
+  S.prompt='the logs have caught and it is starting to roar';await read();await wait(1800);
+  await type('let it die down, just glowing embers');await read();await wait(3200);
+  await type('flames taller than me');await read();await wait(3800);
+  S.end=true;await wait(2000);window.__done=true;};
+</script></body></html>
