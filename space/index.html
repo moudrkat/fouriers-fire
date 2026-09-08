@@ -152,11 +152,9 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <h2>How it works</h2>
     <p>Sentence → 384 numbers → one number on the embers→inferno line → the fire. Remove a word: its heat.</p>
     <details><summary>the steps</summary><ul>
-      <li>The model turns any sentence into 384 numbers. Sentences that mean similar things land close together.</li>
-      <li>At load it does that for 16 "roaring" sentences and 16 "dying" ones. Their two averages are two points; the line between them is the scale, −1 to +1.</li>
-      <li>Your sentence is projected onto that line. One number. That number sets buoyancy, cooling and ember density.</li>
-      <li>Each word is removed in turn and the sentence re-embedded. The drop is the word's share; the share is its heat on the bottom row.</li>
-      <li>No word lists, no rules. "not roaring anymore" fools it, because the model has no theory of "not".</li>
+      <li>The model turns any sentence into 384 numbers; similar meanings land close together. At load it does this for 16 "roaring" and 16 "dying" sentences, and the line between their two averages is the scale, −1 to +1.</li>
+      <li>Your sentence is projected onto that line. One number. It sets buoyancy, cooling and ember density.</li>
+      <li>Each word is removed in turn and the sentence re-embedded; the drop is the word's heat on the bottom row. No word lists, no rules.</li>
     </ul></details>
 
     <h2>The equations</h2>
@@ -168,10 +166,9 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
       <div>∇·<i>u</i> = 0</div>
     </div>
     <details><summary>what the model actually controls</summary><ul>
-      <li>The model produces one number, <i>s</i>: the projection of your sentence on the embers→inferno line, clipped to −1.5 … +1.5. That is its whole output.</li>
-      <li>From <i>s</i> the page sets three constants, by fixed linear maps I chose by hand: ember density <i>p</i> = 0.55 + 0.3<i>s</i> (0.10 … 1.00); buoyancy <i>β</i> = 0.5 (1 + 0.45<i>s</i>) (0.16 … 0.84); cooling <i>k</i> = 0.025 (1 − 0.3<i>s</i>) (0.014 … 0.036).</li>
-      <li>And one number per word: its heat on the bottom row, <i>h</i> = 0.6 + 0.25<i>s</i> + 1.8 × (that word's share), clipped to 0.15 … 1. The share is how far <i>s</i> drops when the word is removed.</li>
-      <li>Nothing else. Swirl ε, the grid, the palette and the pressure solve never change. The slider sets the same <i>s</i> by hand.</li>
+      <li>One number, <i>s</i>: the projection, clipped to ±1.5. From it, by fixed linear maps I chose by hand: ember density <i>p</i> = 0.55 + 0.3<i>s</i>, buoyancy <i>β</i> = 0.5 (1 + 0.45<i>s</i>), cooling <i>k</i> = 0.025 (1 − 0.3<i>s</i>).</li>
+      <li>And one number per word, its heat on the bottom row: 0.6 + 0.25<i>s</i> + 1.8 × the word's share, clipped to 0.15 … 1.</li>
+      <li>Nothing else changes. The slider sets the same <i>s</i> by hand.</li>
     </ul></details>
     <details><summary>the equations, the way a textbook writes them</summary><ul>
       <li><b>Name.</b> The incompressible Navier–Stokes equations with the Boussinesq approximation for buoyancy, coupled to an advection equation for temperature. Two dimensions.</li>
@@ -240,81 +237,10 @@ footer{padding:0 16px 14px;font-size:11px;color:var(--muted);max-width:1120px;wi
     <div class="dos"><div id="dos"></div><button class="btn" id="dosbtn">Run FIRE.COM in DOSBox, in your browser</button><span class="say" id="dossay">153 bytes of 8086, assembled with GNU as, two of them written by the page. ESC quits. <a href="dos.html" target="_blank" rel="noopener">Or open the shipped file in its own tab.</a></span></div>
     <pre class="hex" id="hex"></pre>
     <p class="say" id="hexsay"></p>
-    <details><summary>the whole program, fire.s</summary><ul>
-      <li>Every pixel becomes the average of the ones below it, minus a loss. Nothing in it knows that hot air is light, so nothing in it can puff.</li>
-      <li>This is the readable version, 70 instructions with comments, 153 bytes assembled. It is not golfed. The 1996 #coders 256 Byte Fire Compo had entries doing this in under 256 bytes; today it is done in 64. This file uses none of those tricks.</li>
-      <li>Build: <code>as --32 fire.s -o fire.o &amp;&amp; ld -m elf_i386 -Ttext=0x100 --oformat binary fire.o -o FIRE.COM</code>. Run: <code>dosbox FIRE.COM</code>, or the button above. If the button shows a black box and nothing else, <a href="dos.html" target="_blank" rel="noopener">open DOSBox in its own tab</a>.</li>
-    </ul><pre># FIRE.COM -- the heat equation for a 486, in real mode, straight into video memory.
-#
-#   dT/dt = D d2T/dx2  -  v dT/dy  -  kT        (Fourier 1822, with an updraft and a loss)
-#
-# The screen IS the temperature field: 320 x 200 bytes at A000:0000, one byte per
-# cell, and the palette turns a temperature into a colour. There is no second
-# buffer. The equation is solved in place, bottom to top, so a cell reads the
-# row below it before that row is overwritten. That trick is the whole program.
-#
-# Build:  as --32 fire.s -o fire.o &amp;&amp; ld -m elf_i386 -Ttext=0x100 --oformat binary fire.o -o FIRE.COM
-# Run:    DOSBox, or any DOS. ESC quits.
-
-        .code16
-        .intel_syntax noprefix
-        .text
-        .globl _start
-_start:
-        mov     al, 0x13                # mode 13h: 320x200, 256 colours, one byte per pixel
-        int     0x10
-        push    0xa000                  # es -&gt; the screen, i.e. the temperature field T(x,y)
-        pop     es
-
-# --- the palette: T -&gt; colour.  black -&gt; red (T=31) -&gt; yellow (T=63) -&gt; white (T=159).  6-bit DAC, 0..63
-        mov     dx, 0x3c8               # &quot;start at colour 0&quot;
-        xor     al, al
-        out     dx, al
-        inc     dx                      # 3c9h takes r, g, b, r, g, b, ...
-        xor     cx, cx                  # cl = colour index 0..255
-pal:    mov     al, cl                  # red   = min(2T, 62)
-        cmp     al, 31
-        jbe     1f
-        mov     al, 31
-1:      add     al, al
-        out     dx, al
-        mov     al, cl                  # green = clamp(2(T - 32), 0, 62)
-        sub     al, 32
-        jnc     2f
-        xor     al, al
-2:      cmp     al, 31
-        jbe     3f
-        mov     al, 31
-3:      add     al, al
-        out     dx, al
-        mov     al, cl                  # blue  = clamp(T - 96, 0, 63)
-        sub     al, 96
-        jnc     4f
-        xor     al, al
-4:      cmp     al, 63
-        jbe     5f
-        mov     al, 63
-5:      out     dx, al
-        inc     cl
-        jnz     pal
-
-# --- one frame
-frame:
-# boundary condition: the bottom two rows are embers, each cell hot or cold at random.
-# Two rows, because every cell averages the two rows below it.
-# The random number is a 16-bit linear congruential generator living in bp.
-        mov     di, 198*320
-        mov     cx, 640
-ember:  imul    bp, bp, 25173
-        add     bp, 13849
-        mov     ax, bp
-        mov     al, ah                  # take the good bits
-        cmp     al, 128                 # hot with probability 128/256. This byte is the ember density.
-        sbb     al, al                  # borrow -&gt; 255, no borrow -&gt; 0
-        stosb
-        loop    ember
-
-# the equation, one cell at a time, for every cell from row 1 down to row 197.
+    <details><summary>the inner loop</summary><ul>
+      <li>Every pixel becomes the average of the ones below it, minus a loss, written one row up. The two side neighbours are the diffusion, reading below and writing above is the updraft, the subtraction is the loss.</li>
+      <li>Readable version, 70 instructions with comments, 153 bytes. Not golfed; the 1996 compo did it under 256 with tricks this file does not use. <a href="https://github.com/moudrkat/fouriers-fire/blob/main/fire.s">The whole file, with the palette and the build line.</a></li>
+    </ul><pre># the equation, one cell at a time, for every cell from row 1 down to row 197.
 # T(x, y-1)  &lt;-  ( T(x-1,y) + T(x+1,y) + T(x,y+1) + T(x,y+2) ) / 4  -  loss
 #   the two side neighbours   = diffusion, D d2T/dx2
 #   reading below, writing above = the updraft, v dT/dy, at one row per frame
@@ -336,15 +262,7 @@ cell:   xor     ax, ax
 6:      mov     es:[di-320], al         # written one row UP: that is the updraft
         inc     di
         cmp     di, 198*320
-        jb      cell
-
-        in      al, 0x60                # keyboard: scancode 1 is ESC
-        dec     al
-        jnz     frame
-
-        mov     ax, 0x0003              # text mode back, and return to DOS
-        int     0x10
-        ret</pre></details>
+        jb      cell</pre></details>
 
     <h2>The equations, JavaScript</h2>
     <p>Ninety lines. One of them says hot air is light. It puffs.</p>

@@ -12,8 +12,6 @@ subprocess.run(["ld", "-m", "elf_i386", "-Ttext=0x100", "--oformat", "binary", "
 n = len((sp / "FIRE.COM").read_bytes())
 # the Space page
 s = (sp / "index.src.html").read_text()
-asm = html.escape((root / "fire.s").read_text().rstrip())
-s = re.sub(r"(<details><summary>the whole program, fire\.s</summary>.*?<pre>).*?(</pre></details>)", lambda m: m.group(1) + asm + m.group(2), s, flags=re.S)
 s = re.sub(r"\b1[45][35] bytes", f"{n} bytes", s)
 (sp / "index.html").write_text(s.replace("__FLUID_JS__", fl))
 # the long page
