@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fourier's Fire evals</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--ground:#0B0907;--panel:#14100C;--rule:#3A2E22;--ink:#EDE3D3;--ink2:#B5A48E;--muted:#7D6E5C;--phys:#E0561F;--vid:#4E8FCB;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:13px/1.5 "IBM Plex Mono",ui-monospace,Menlo,monospace}
+.wrap{max-width:1120px;margin:0 auto;padding:16px}
+header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px}
+h1{font:400 26px/1 "Instrument Serif",Georgia,serif;margin:0}
+a{color:var(--ink2)}
+p{margin:0 0 10px;color:var(--ink2);max-width:80ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0}
+.tile{background:var(--panel);border:1px solid var(--rule);padding:12px}
+.tile b{display:block;font:400 32px/1 "Instrument Serif",Georgia,serif;color:var(--ink);font-variant-numeric:tabular-nums}
+.tile span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bar{height:2px;background:var(--rule);margin:8px 0}.bar i{display:block;height:100%;background:var(--phys);width:0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:500;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:#7FB27A}.xx{color:var(--phys)}
+.hot{color:var(--phys)}.cold{color:var(--vid)}
+.big{color:var(--ink)}.small{color:var(--ink2)}
+.scroll{overflow-x:auto}
+button{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.06em;color:#fff;background:var(--phys);border:0;padding:10px 14px;cursor:pointer}
+button:disabled{background:var(--rule);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>Fourier's Fire evals</h1><span><a href="index.html">← the fire</a> &nbsp; <a href="about.html">how it works</a></span></header>
+  <p>The direction that drives the fire is scored on 40 sentences it has never seen: 20 that mean a big fire, 20 that mean embers. A case is right when the sign of the projection matches. Chance is 20. The same <code>probe.js</code> that runs the fire runs here, so this scores what ships. Everything runs in your browser.</p>
+  <p><button id="go">Run the eval here</button> &nbsp; <span id="status" style="color:var(--muted)">not started</span></p>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="tiles" id="tiles" hidden>
+    <div class="tile"><b id="tModel">–</b><span>direction alone, of 40</span></div>
+    <div class="tile"><b>20</b><span>chance</span></div>
+    <div class="tile"><b id="tBig">–</b><span>big fires right, of 20</span></div>
+    <div class="tile"><b id="tSmall">–</b><span>embers right, of 20</span></div>
+    <div class="tile"><b id="tHot">–</b><span>hottest word as a human would pick</span></div>
+  </div>
+  <p id="note" hidden>Last measured offline on 7 September 2026: 30 of 40 (big 11 of 20, embers 19 of 20), hottest word 19 of 40. Eight anchors per side scored 26; sixteen per side score 30. The misses are the mild ones: "more wood please", "throw another log on", "make it bigger". The model knows "inferno". It does not know that asking for wood means the same thing. Negation is beyond it: "not roaring anymore" reads as roaring.</p>
+  <div class="scroll"><table id="tbl" hidden><thead><tr><th>sentence</th><th>means</th><th>read</th><th></th><th>hottest word</th><th>every word's share</th></tr></thead><tbody></tbody></table></div>
+</div>
+<script type="module">
+import { MODEL_ID, makeProbe, words as splitWords } from './probe.js';
+const cases=await (await fetch('cases.json')).json();
+const $=id=>document.getElementById(id);
+const esc=t=>t.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+const f2=v=>(v>=0?'+':'')+v.toFixed(2);
+$('go').addEventListener('click',async()=>{
+  $('go').disabled=true;
+  try{
+    $('status').textContent='fetching the model (23 MB, once)…';
+    const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
+    const fe=await pipeline('feature-extraction',MODEL_ID,{dtype:'q8',progress_callback:p=>{if(p.status==='progress'&&p.total>1e6)$('bar').style.width=p.progress+'%';}});
+    $('status').textContent='finding the direction from 32 sentences…';
+    const probe=await makeProbe(async t=>Array.from((await fe(t,{pooling:'mean',normalize:true})).data));
+    const tb=$('tbl').querySelector('tbody');$('tbl').hidden=false;$('tiles').hidden=false;
+    let ok=0,okB=0,okS=0,hot=0,i=0;const t0=performance.now();
+    for(const c of cases){
+      const w=splitWords(c.text);const {full,shares}=await probe.shares(w);
+      const sign=full>=0?1:-1,right=sign===c.label,top=shares.indexOf(Math.max(...shares)),hotOK=c.hot.includes(w[top]);
+      ok+=right;if(right){if(c.label>0)okB++;else okS++;}hot+=hotOK;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${esc(c.text)}</td><td class="${c.label>0?'big':'small'}">${c.label>0?'big fire':'embers'}</td><td class="n">${f2(full)}</td><td class="${right?'ok':'xx'}">${right?'right':'wrong'}</td><td>${esc(w[top])} ${hotOK?'<span class="ok">✓</span>':'<span style="color:var(--muted)">(a human: '+esc(c.hot.join(' / '))+')</span>'}</td><td>${w.map((x,j)=>`<span class="${shares[j]>.04?'hot':shares[j]<-.04?'cold':''}">${esc(x)} ${f2(shares[j])}</span>`).join(' &nbsp;')}</td>`;
+      tb.appendChild(tr);
+      i++;$('bar').style.width=(100*i/cases.length)+'%';$('status').textContent=`${i} of ${cases.length} · ${ok} right so far`;
+      $('tModel').textContent=ok;$('tBig').textContent=okB;$('tSmall').textContent=okS;$('tHot').textContent=hot;
+    }
+    $('status').textContent=`done: ${ok} of ${cases.length} right, ${((performance.now()-t0)/1000).toFixed(1)} s in your browser`;
+    $('note').hidden=false;
+  }catch(e){$('status').textContent='could not run: '+String(e).slice(0,160);$('go').disabled=false;}
+});
+</script>
+</body>
+</html>

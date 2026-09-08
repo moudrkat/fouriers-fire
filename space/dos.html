@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FIRE.COM</title>
+<link rel="stylesheet" href="https://v8.js-dos.com/latest/js-dos.css">
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}#dos{width:100%;height:100%}</style>
+</head><body><div id="dos"></div>
+<script src="https://v8.js-dos.com/latest/js-dos.js"></script>
+<script>
+Dos(document.getElementById('dos'),{url:'fire.jsdos',autoStart:true,kiosk:true,noCloud:true,onEvent:(e)=>{if(e==='emu-ready')parent.postMessage('dos-ready','*');}});
+</script></body></html>

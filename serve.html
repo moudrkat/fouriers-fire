@@ -1,0 +1,601 @@
+<meta charset="utf-8">
+<title>Fourier's Fire</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+:root{
+  --ground:#0B0907; --panel:#14100C; --panel2:#1C1610; --rule:#2C231A;
+  --ink:#EDE3D3; --ink2:#B5A48E; --muted:#7D6E5C;
+  --phys:#E0561F; --vid:#4E8FCB; --trick:#B58A3C;
+  --serif:"Instrument Serif",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font:16px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--ink2)}
+h1,h2,h3{font-family:var(--serif);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.005em}
+h1{font-size:clamp(44px,8vw,96px);line-height:.95}
+h2{font-size:clamp(30px,4.2vw,44px);line-height:1.08}
+h3{font-size:22px}
+p{margin:0}
+.eyebrow{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.prose{max-width:62ch}
+.prose p+p{margin-top:1em}
+em{font-family:var(--serif);font-style:italic;font-size:1.08em}
+code,kbd{font-family:var(--mono);font-size:.9em}
+
+/* hero: the fire reads a sentence */
+#hero{position:relative;height:min(82vh,760px);min-height:460px;overflow:hidden;background:#000}
+#herofire,#heroglow{position:absolute;inset:0;width:100%;height:100%}
+#heroglow{filter:blur(16px);opacity:.3;mix-blend-mode:screen}
+#hero .over{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:28px 24px;pointer-events:none}
+#hero .over>*{pointer-events:auto}
+#hero .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+#hero .bottom{max-width:1120px;margin:0 auto;width:100%;display:grid;gap:14px}
+#hero .title{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px}
+.pde{font-family:var(--serif);font-size:clamp(20px,2.8vw,32px);line-height:1.2;color:var(--ink);text-shadow:0 2px 24px #000,0 0 2px #000;text-align:right}
+.pde i{font-style:italic}
+.pde small{display:block;font:12px/1.6 var(--mono);color:var(--ink2);margin-top:6px;letter-spacing:.02em}
+.legend{font:12px/1.6 var(--mono);color:var(--ink2);text-shadow:0 1px 8px #000}
+.legend b{font-weight:500;color:var(--ink)}
+/* the sentence, its words as embers */
+.ask{display:grid;gap:8px}
+.ask form{display:flex;gap:8px;align-items:stretch}
+.ask input[type=text]{flex:1;min-width:0;background:rgba(11,9,7,.72);border:1px solid var(--rule);color:var(--ink);font:clamp(18px,2.4vw,26px)/1.3 var(--serif);padding:10px 14px;backdrop-filter:blur(6px)}
+.ask input[type=text]:focus-visible{outline:none;border-color:var(--ink2)}
+.ask input::placeholder{color:var(--muted);font-style:italic}
+.words{position:relative;height:30px;font:12px var(--mono);pointer-events:none}
+.words span{position:absolute;bottom:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:clip;color:var(--muted);text-shadow:0 1px 6px #000;transition:color .4s}
+.meter{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;font:12px var(--mono);color:var(--ink2);text-shadow:0 1px 6px #000}
+.meter .axis{position:relative;height:2px;background:var(--rule)}
+.meter .axis i{position:absolute;top:50%;left:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:var(--phys);box-shadow:0 0 12px var(--phys);transition:left .4s}
+.meter .axis b{position:absolute;top:-4px;left:50%;width:1px;height:10px;background:var(--muted)}
+.say{font:12px/1.6 var(--mono);color:var(--ink2);text-shadow:0 1px 6px #000;min-height:1.6em}
+.say b{color:var(--ink);font-weight:500}
+.bar{height:2px;background:var(--rule);display:none}.bar.on{display:block}.bar i{display:block;height:100%;background:var(--phys);width:0}
+
+/* sections */
+section{padding:72px 0;border-top:1px solid var(--rule)}
+.head{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-bottom:36px}
+.head .lede{color:var(--ink2);max-width:62ch}
+.two{display:grid;grid-template-columns:minmax(0,62ch) minmax(280px,1fr);gap:40px;align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+
+/* bench */
+.bench{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:820px){.bench{grid-template-columns:1fr}}
+.pane{background:var(--panel);border:1px solid var(--rule);display:flex;flex-direction:column;min-width:0}
+.pane header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--rule)}
+.pane header .eyebrow{display:flex;align-items:center;gap:8px}
+.pane header .r{font:12px var(--mono);color:var(--muted)}
+.swatch{width:10px;height:10px;border-radius:50%;display:inline-block}
+.view{position:relative;aspect-ratio:16/9;background:#000;overflow:hidden}
+.view canvas,.view video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+#trick{image-rendering:pixelated;image-rendering:crisp-edges}
+.drop{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:flex-start;padding:12px}
+.drop.active::after{content:"";position:absolute;inset:8px;border:1px dashed var(--vid)}
+.filebtn{font:500 12px/1 var(--mono);letter-spacing:.06em;color:var(--ink);background:rgba(11,9,7,.72);border:1px solid var(--rule);padding:9px 11px;cursor:pointer;backdrop-filter:blur(4px)}
+.filebtn:hover,.filebtn:focus-visible{border-color:var(--ink2);outline:none}
+.filebtn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.knobs{display:grid;grid-template-columns:1fr;gap:10px;padding:14px}
+.knob{display:grid;grid-template-columns:8.5em 1fr 4.5em;align-items:center;gap:12px;font:12px/1 var(--mono);color:var(--ink2)}
+.knob output{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+.knob b{font-weight:500;color:var(--ink)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--rule)}
+input[type=range]::-moz-range-track{height:2px;background:var(--rule)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--phys);margin-top:-6px;border:0}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--phys);border:0}
+input[type=range]:focus-visible{outline:1px solid var(--ink2);outline-offset:4px}
+.meta{padding:14px;font:12px/1.6 var(--mono);color:var(--muted)}
+.meta b{color:var(--ink2);font-weight:500}
+
+/* charts */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+@media (max-width:820px){.charts{grid-template-columns:1fr}}
+.chart{background:var(--panel);border:1px solid var(--rule);padding:14px 14px 10px;min-width:0}
+.chart .t{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+.chart .t h3{font-size:20px}
+.chart .read{font:12px/1 var(--mono);color:var(--ink2);font-variant-numeric:tabular-nums;min-height:12px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .ax{font:11px var(--mono);fill:var(--muted)}
+.chart .grid{stroke:var(--rule);stroke-width:1}
+.chart .lbl{font:11px var(--mono);fill:var(--ink2)}
+.chart .note{font:12px/1.5 var(--mono);color:var(--muted);margin-top:8px}
+.leg{display:flex;gap:16px;font:12px var(--mono);color:var(--ink2);margin-top:6px;flex-wrap:wrap}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.leg i{width:14px;height:2px;display:inline-block}
+
+/* probe */
+.probe{display:grid;grid-template-columns:minmax(0,62ch) minmax(280px,1fr);gap:40px;align-items:start}
+@media (max-width:820px){.probe{grid-template-columns:1fr}}
+.bars{display:grid;gap:6px;font:12px var(--mono);color:var(--ink2)}
+.bars .row{display:grid;grid-template-columns:9em 1fr 4em;gap:10px;align-items:center}
+.bars .row .w{text-align:right;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars .row .b{position:relative;height:10px}
+.bars .row .b i{position:absolute;top:0;height:100%;background:var(--phys)}
+.bars .row .b i.neg{background:var(--vid)}
+.bars .row .b b{position:absolute;left:50%;top:-3px;width:1px;height:16px;background:var(--rule)}
+.bars .row .n{text-align:right;font-variant-numeric:tabular-nums}
+
+/* code */
+pre{background:var(--panel);border:1px solid var(--rule);padding:18px 20px;margin:0;overflow-x:auto;font:13px/1.6 var(--mono);color:var(--ink);tab-size:2}
+pre .c{color:var(--muted)}
+.count{display:flex;flex-wrap:wrap;gap:12px 28px;font:12px var(--mono);color:var(--muted);margin-top:12px}
+.count b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+.refs{list-style:none;margin:0;padding:0;display:grid;gap:12px;max-width:70ch;color:var(--ink2);font-size:14px}
+.refs li{padding-left:1.4em;text-indent:-1.4em}
+footer{padding:36px 0 60px;color:var(--muted);font:12px/1.6 var(--mono);border-top:1px solid var(--rule)}
+</style>
+
+<div id="hero">
+  <canvas id="heroglow" width="640" height="360" aria-hidden="true"></canvas>
+  <canvas id="herofire" width="640" height="360" aria-label="Live simulated fire; each word of the sentence is an ember"></canvas>
+  <div class="over">
+    <div class="top">
+      <span class="eyebrow">A campfire, from the equations up. The embers are your words.</span>
+      <span class="legend"><b>live</b> · Navier–Stokes + heat · 320×180 cells</span>
+    </div>
+    <div class="bottom">
+      <div class="title">
+        <div>
+          <h1>Fourier's Fire</h1>
+          <p class="legend" style="margin-top:8px">A 1990s trick, the one line it was missing, and a language model reading the fire's name.</p>
+        </div>
+        <div class="pde" aria-label="Momentum and heat equations">
+          ∂<i>u</i>/∂<i>t</i> + (<i>u</i>·∇)<i>u</i> = −∇<i>p</i> + <i>β</i>&thinsp;<i>T</i>&thinsp;ŷ<br>
+          ∂<i>T</i>/∂<i>t</i> + (<i>u</i>·∇)<i>T</i> = −<i>k</i>&thinsp;<i>T</i>
+          <small>∇·u = 0. The β term is "hot air is light". The rest is bookkeeping.</small>
+        </div>
+      </div>
+      <div class="ask">
+        <div class="words" id="words" aria-hidden="true"></div>
+        <form id="askform"><input type="text" id="ask" value="the logs have caught and it is starting to roar" autocomplete="off" spellcheck="false" aria-label="Tell the fire what it is doing" placeholder="tell the fire what it is doing"></form>
+        <div class="meter"><span>embers</span><div class="axis"><b></b><i id="dot"></i></div><span>inferno</span></div>
+        <div class="bar" id="bar"><i id="barfill"></i></div>
+        <p class="say" id="say">loading a 23 MB sentence model into your browser…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="what">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">What the trick was</span>
+      <h2>Every pixel copies the pixel below it, blurs it sideways, and cools a bit.</h2>
+    </div>
+    <div class="two">
+      <div class="prose">
+        <p>That is the whole 1990s effect, the one that fit in a few hundred bytes of assembler. Random embers on the bottom row, and each frame every cell looks one row down and a random step sideways, averages with its neighbours, and loses a little heat. Colour is a lookup from black through red and yellow to white.</p>
+        <p>Written as a limit, "look one row down" is an advection term <em>v ∂T/∂y</em>, "a random step, then average" is Fourier's diffusion <em>D ∂²T/∂x²</em>, and "lose a little" is decay <em>−kT</em>. The demo coders were solving the heat equation from 1822 by finite differences at sixty frames a second on a 486, and calling it a trick.</p>
+        <p>What it does not have is a reason to go up. The updraft <em>v</em> is a constant the coder typed in. In a real fire the air rises because it is hot, and that one fact, hot air is light, is where all the flicker comes from. So the fire at the top of this page adds it: a velocity field pushed upward by temperature, kept incompressible, carrying the heat with it. Navier–Stokes with the Boussinesq approximation, solved the way Jos Stam did it in 1999.</p>
+      </div>
+      <div class="pane">
+        <header><span class="eyebrow"><i class="swatch" style="background:var(--trick)"></i>the trick, 11 lines</span><span class="r">Fourier + updraft</span></header>
+        <div class="view"><canvas id="trick" width="160" height="90" aria-label="The 1990s fire effect"></canvas></div>
+        <p class="meta">The heat equation with a constant updraft. No buoyancy, so no puffing. Its spectrum is in the charts below, in ochre.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="fit">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">The fit</span>
+      <h2>A real fire next to the equations.</h2>
+      <p class="lede">Left, a campfire filmed on 7 September 2026. Right, the equations, with four constants. Drop your own clip on the left pane. The brightness profile is what you fit by hand. The flicker spectrum is what buoyancy gives you for free.</p>
+    </div>
+    <div class="bench">
+      <div class="pane" id="vpane">
+        <header><span class="eyebrow"><i class="swatch" style="background:var(--vid)"></i>video</span><span class="r" id="vinfo">sample · 8 s loop</span></header>
+        <div class="view">
+          <video id="video" src="sample.mp4" muted loop playsinline autoplay crossorigin="anonymous"></video>
+          <div class="drop" id="drop">
+            <label class="filebtn">Replace with your video<input type="file" id="file" accept="video/*"></label>
+          </div>
+        </div>
+        <p class="meta">Brightness per row is measured from each frame, and the mean of the whole frame goes into the spectrum. Nothing leaves your browser.</p>
+      </div>
+      <div class="pane">
+        <header><span class="eyebrow"><i class="swatch" style="background:var(--phys)"></i>equations</span><span class="r" id="sinfo">320×180 cells</span></header>
+        <div class="view"><canvas id="phys" width="320" height="180" aria-label="Simulated fire with buoyancy"></canvas></div>
+        <div class="knobs">
+          <label class="knob"><span><b>β</b> buoyancy</span><input type="range" id="kbeta" min="0.05" max="1" step="0.01" value="0.50"><output id="obeta">0.50</output></label>
+          <label class="knob"><span><b>k</b> cooling</span><input type="range" id="kk" min="0.005" max="0.1" step="0.001" value="0.025"><output id="ok">0.025</output></label>
+          <label class="knob"><span><b>ε</b> swirl</span><input type="range" id="keps" min="0" max="1" step="0.01" value="0.30"><output id="oeps">0.30</output></label>
+          <label class="knob"><span><b>p</b> ember density</span><input type="range" id="kp" min="0.05" max="1" step="0.01" value="0.55"><output id="op">0.55</output></label>
+        </div>
+        <p class="meta"><b>β</b> in cells per frame² per unit heat, <b>k</b> per frame. <b>ε</b> is vorticity confinement, the swirl a coarse grid would otherwise smear away. <b>p</b> is the boundary condition, not part of the equations. The sentence at the top moves β, k and p too, and replaces p with its words.</p>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart">
+        <div class="t"><h3>Brightness by height</h3><span class="read" id="rProf"></span></div>
+        <svg id="cProf" viewBox="0 0 520 260" role="img" aria-label="Mean brightness of each row, video versus equations versus the trick"></svg>
+        <div class="leg"><span><i style="background:var(--vid)"></i>video</span><span><i style="background:var(--phys)"></i>equations</span><span><i style="background:var(--trick)"></i>the trick</span></div>
+        <p class="note">Each row's mean brightness, normalised to the brightest row. Both models can fit this: cooling sets the height, embers the base.</p>
+      </div>
+      <div class="chart">
+        <div class="t"><h3>Flicker spectrum</h3><span class="read" id="rSpec"></span></div>
+        <svg id="cSpec" viewBox="0 0 520 260" role="img" aria-label="Power spectrum of whole-frame brightness, video versus equations versus the trick"></svg>
+        <div class="leg"><span><i style="background:var(--vid)"></i>video</span><span><i style="background:var(--phys)"></i>equations</span><span><i style="background:var(--trick)"></i>the trick</span></div>
+        <p class="note">Power of whole-frame brightness over the last ~10 s. A real fire puffs at about 1.5/√<i>d</i> Hz for a fire <i>d</i> metres across. The equations puff too, because hot air is light. The trick is flat noise whatever you set.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="probe">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">The model, and what it is actually doing</span>
+      <h2>One direction in the model, read instead of written.</h2>
+    </div>
+    <div class="probe">
+      <div class="prose">
+        <p>The sentence at the top goes through a small sentence encoder, all-MiniLM-L6-v2, 22 million parameters, running in this tab. It turns the sentence into a point in a 384-dimensional space. Nothing is generated. The model never answers.</p>
+        <p>At load, thirty-two sentences are embedded: sixteen about a roaring fire, sixteen about dying embers. The difference between the two mean points is a direction. That is the same object people add to a model's activations to steer it, a steering vector by difference of means. Here it is not added. It is read: your sentence is projected onto it, and the projection is the position of the dot between "embers" and "inferno". That number sets buoyancy, cooling and ember density.</p>
+        <p>Then each word is removed in turn and the sentence embedded again. How far the projection falls when a word is missing is that word's share of the fire, and that share is its heat on the bottom row. The flames rise from the words that carry them. This is occlusion, the oldest attribution method there is, and it is shown here instead of an attention map because the exported model does not expose its attention, and because a heat that you can remove and watch go out is easier to believe than a heat you are told about.</p>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:12px">Each word's share of the fire</p>
+        <div class="bars" id="bars"><div class="row"><span class="w" style="color:var(--muted)">waiting for the model</span><span class="b"><b></b></span><span class="n"></span></div></div>
+        <p class="meta" style="padding:14px 0 0">Bars are the drop in projection when the word is removed, in units where the two training means sit at ±1. Blue bars pull toward embers. On 40 held-out sentences the sign is right 30 times; chance is 20. <a href="eval.html">The eval runs here.</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="code">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">The trick, in full</span>
+      <h2>This is the entire 1990s fire, including drawing it.</h2>
+      <p class="lede">The originals were a few hundred bytes of x86 assembler, and the trick was often code that wrote the inner loop for itself. This is the same loop in JavaScript. The version with physics is <code>fluid.js</code>, about ninety lines, and it is not a trick.</p>
+    </div>
+<pre id="src"></pre>
+    <div class="count" id="count"></div>
+  </div>
+</section>
+
+<section id="refs">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Where the numbers come from</span>
+      <h2>Two hundred years, six papers, one demo.</h2>
+    </div>
+    <ul class="refs">
+      <li>Fourier, J. (1822). <em>Théorie analytique de la chaleur.</em> The diffusion term, and why it is called the heat equation.</li>
+      <li>Boussinesq, J. (1903). <em>Théorie analytique de la chaleur</em>, vol. 2. Treat the air as incompressible and let temperature change only its weight. The <i>β T</i> term.</li>
+      <li>Cetegen, B. M. &amp; Ahmed, T. A. (1993). Experiments on the periodic instability of buoyant plumes and pool fires. <em>Combustion and Flame</em> 93, 157. The puffing frequency <i>f</i> ≈ 1.5 <i>d</i><sup>−1/2</sup> Hz.</li>
+      <li>Stam, J. (1999). Stable fluids. <em>SIGGRAPH 99.</em> Semi-Lagrangian advection and a pressure solve, one step per frame, never blows up.</li>
+      <li>Zeiler, M. &amp; Fergus, R. (2014). Visualizing and understanding convolutional networks. <em>ECCV.</em> Occlusion as attribution: cover a part, watch the score.</li>
+      <li>Rimsky, N. et al. (2023). Steering Llama 2 via contrastive activation addition. Difference of means as a steering direction. Read here, not added.</li>
+      <li>Sanglard, F. (2018). <em>How Doom fire was done.</em> The PlayStation Doom fire, which is the trick with <i>v</i> = 1 and random cooling.</li>
+    </ul>
+  </div>
+</section>
+
+<footer><div class="wrap">Campfire filmed 7 September 2026. Both simulations and the model run in your browser; neither the video nor the sentence leaves it.</div></footer>
+
+<script>// A fire with physics in it.
+//
+//   du/dt + (u·∇)u = −∇p + β T ŷ + ε (N × ω)      momentum, with hot air lighter than cold (Boussinesq 1903)
+//   ∇·u = 0                                        the air is incompressible
+//   dT/dt + (u·∇)T = −k T                           heat is carried by the air and radiated away
+//
+// Solved the way Jos Stam did it in 1999: semi-Lagrangian advection, a Jacobi
+// pressure solve, one step per frame, unconditionally stable. Velocities are in
+// cells per frame. y grows downward in the array, so "up" is −v.
+// Embers on the bottom rows are the boundary condition; everything above them is
+// the equations.
+function makeFluid(W, H) {
+  const N = W * H;
+  const u = new Float32Array(N), v = new Float32Array(N), u2 = new Float32Array(N), v2 = new Float32Array(N);
+  const T = new Float32Array(N), T2 = new Float32Array(N), p = new Float32Array(N), div = new Float32Array(N), curl = new Float32Array(N);
+  const ember = new Float32Array(W);
+  const K = { beta: 0.06, k: 0.045, p: 0.55, eps: 0.35, iters: 16 };
+  let mean = 0, maxT = 1;
+
+  function sample(f, x, y) {
+    x = x < 0 ? 0 : x > W - 1.001 ? W - 1.001 : x;
+    y = y < 0 ? 0 : y > H - 1.001 ? H - 1.001 : y;
+    const x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, i = y0 * W + x0;
+    return (f[i] * (1 - fx) + f[i + 1] * fx) * (1 - fy) + (f[i + W] * (1 - fx) + f[i + W + 1] * fx) * fy;
+  }
+  function bnd(f, kind) {            // kind: 'u' side walls kill u, 'v' floor kills v, top is open, 'p' Neumann
+    for (let y = 0; y < H; y++) { f[y * W] = kind === 'u' ? 0 : f[y * W + 1]; f[y * W + W - 1] = kind === 'u' ? 0 : f[y * W + W - 2]; }
+    for (let x = 0; x < W; x++) { f[x] = f[W + x]; f[(H - 1) * W + x] = kind === 'v' ? 0 : f[(H - 2) * W + x]; }
+  }
+
+  function step() {
+    // boundary condition: embers on the bottom rows, in the middle half, each one hot or cold, slowly changing
+    // If someone has given the fire words, `heat` holds one target per column and the
+    // embers flicker around it; otherwise they are random in the middle half.
+    const x0 = W * 0.22 | 0, x1 = W * 0.78 | 0;
+    if (api.heat) { for (let x = 0; x < W; x++) if (Math.random() < 0.15) ember[x] = Math.random() < 0.15 + 0.85 * api.heat[x] ? api.heat[x] * (0.75 + 0.25 * Math.random()) : 0; }
+    else for (let x = 0; x < W; x++) if (Math.random() < 0.04) ember[x] = (x >= x0 && x < x1 && Math.random() < K.p) ? 0.7 + 0.3 * Math.random() : 0;
+    for (let y = H - 3; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (ember[x] > T[i]) T[i] = ember[x]; }
+
+    // buoyancy: hot air is light. This single line is what the 1990s trick does not have.
+    for (let i = 0; i < N; i++) v[i] -= K.beta * T[i];
+
+    // vorticity confinement: put back the small swirls the coarse grid smears away
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; curl[i] = 0.5 * ((v[i + 1] - v[i - 1]) - (u[i + W] - u[i - W])); }
+    for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) {
+      const i = y * W + x;
+      let dx = Math.abs(curl[i + 1]) - Math.abs(curl[i - 1]), dy = Math.abs(curl[i + W]) - Math.abs(curl[i - W]);
+      const l = Math.sqrt(dx * dx + dy * dy) + 1e-5; dx /= l; dy /= l;
+      u[i] += K.eps * dy * curl[i]; v[i] -= K.eps * dx * curl[i];
+    }
+
+    // advect velocity by itself
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; u2[i] = sample(u, x - u[i], y - v[i]); v2[i] = sample(v, x - u[i], y - v[i]); }
+    bnd(u2, 'u'); bnd(v2, 'v');
+
+    // make it incompressible: solve ∇²p = ∇·u, subtract ∇p
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; div[i] = 0.5 * (u2[i + 1] - u2[i - 1] + v2[i + W] - v2[i - W]); p[i] = 0; }
+    for (let it = 0; it < K.iters; it++) {
+      for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; p[i] = (p[i - 1] + p[i + 1] + p[i - W] + p[i + W] - div[i]) * 0.25; }
+      bnd(p, 'p');
+    }
+    for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) { const i = y * W + x; u[i] = u2[i] - 0.5 * (p[i + 1] - p[i - 1]); v[i] = v2[i] - 0.5 * (p[i + W] - p[i - W]); }
+    bnd(u, 'u'); bnd(v, 'v');
+
+    // carry the heat with the air, and let it cool
+    let sum = 0, mx = 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x; const t = sample(T, x - u[i], y - v[i]) * (1 - K.k);
+      T2[i] = t; sum += t; if (t > mx) mx = t;
+    }
+    T.set(T2); mean = sum / N; maxT = mx;
+  }
+  const api = {
+    K, T, W, H, step, heat: null,
+    mean: () => mean,
+    rows: () => { const r = new Float32Array(H); for (let y = 0; y < H; y++) { let s = 0; for (let x = 0; x < W; x++) s += T[y * W + x]; r[y] = s / W; } return r; },
+  };
+  return api;
+}
+if (typeof module !== 'undefined') module.exports = { makeFluid };
+</script>
+<script>
+// ---------- palette ----------
+const PAL=new Uint8ClampedArray(256*4);
+{ // blackbody-ish: black, deep red, orange, yellow, white; dark end kept dark
+  const stops=[[0,[0,0,0]],[.18,[70,4,0]],[.36,[190,30,0]],[.55,[245,110,10]],[.75,[255,200,60]],[.9,[255,240,180]],[1,[255,255,255]]];
+  for(let i=0;i<256;i++){const t=i/255;let a=stops[0],b=stops[1];for(let s=1;s<stops.length;s++){if(t<=stops[s][0]){a=stops[s-1];b=stops[s];break;}}
+    const f=(t-a[0])/(b[0]-a[0]||1);for(let c=0;c<3;c++)PAL[4*i+c]=a[1][c]+(b[1][c]-a[1][c])*f;PAL[4*i+3]=255;}
+}
+function paint(g,img,T,n){const p=img.data;for(let i=0;i<n;i++){const c=4*Math.min(255,T[i]*255|0);p[4*i]=PAL[c];p[4*i+1]=PAL[c+1];p[4*i+2]=PAL[c+2];p[4*i+3]=255;}g.putImageData(img,0,0);}
+
+// ---------- the physics fire ----------
+const PW=320,PH=180,physC=document.getElementById('phys'),physG=physC.getContext('2d'),physImg=physG.createImageData(PW,PH);
+const fluid=makeFluid(PW,PH);
+const heroC=document.getElementById('herofire'),heroG=heroC.getContext('2d');
+const glowC=document.getElementById('heroglow'),glowG=glowC.getContext('2d');
+
+// ---------- the trick ----------
+function makeTrick(canvas,W,H){
+  const g=canvas.getContext('2d'),h=new Float32Array(W*(H+4)),img=g.createImageData(W,H);
+  const ember=new Float32Array(W),K={D:.3,k:.012,p:.5};let mean=0;
+  function step(){
+    for(let x=0;x<W;x++){if(Math.random()<.08)ember[x]=Math.random()<K.p?1:0;for(let y=H;y<H+4;y++)h[y*W+x]=ember[x];}
+    let sum=0;
+    for(let y=0;y<H;y++){const r=(y+1)*W;for(let x=0;x<W;x++){
+      const xc=Math.min(W-1,Math.max(0,x+(Math.random()*3|0)-1)),xl=xc?xc-1:0,xr=xc<W-1?xc+1:xc;
+      const s=(1-K.D)*h[r+xc]+K.D*.5*(h[r+xl]+h[r+xr])-K.k*(.5+Math.random());const t=s>0?s:0;h[y*W+x]=t;sum+=t;}}
+    mean=sum/(W*H);paint(g,img,h,W*H);
+  }
+  return {step,mean:()=>mean,rows:()=>{const r=new Float32Array(H);for(let y=0;y<H;y++){let s=0;for(let x=0;x<W;x++)s+=h[y*W+x];r[y]=s/W;}return r;}};
+}
+const trick=makeTrick(document.getElementById('trick'),160,90);
+
+// knobs
+const KNOB={beta:'kbeta',k:'kk',eps:'keps',p:'kp'},FMT={beta:2,k:3,eps:2,p:2};
+for(const key in KNOB){
+  const el=document.getElementById(KNOB[key]),out=document.getElementById('o'+key);
+  el.addEventListener('input',()=>{fluid.K[key]=+el.value;out.textContent=(+el.value).toFixed(FMT[key]);});
+}
+function setKnob(key,val){const el=document.getElementById(KNOB[key]);val=Math.max(+el.min,Math.min(+el.max,val));el.value=val;el.dispatchEvent(new Event('input'));}
+fluid.K.beta=.5;fluid.K.k=.025;fluid.K.eps=.3;fluid.K.p=.55;
+
+// ---------- video measurement ----------
+const video=document.getElementById('video'),vc=document.createElement('canvas');vc.width=64;vc.height=36;
+const vg=vc.getContext('2d',{willReadFrequently:true});
+let vRows=null,vMean=0,vOK=false;
+function measureVideo(){
+  if(video.readyState<2||video.videoWidth===0)return;
+  try{vg.drawImage(video,0,0,64,36);const d=vg.getImageData(0,0,64,36).data;
+    const r=new Float32Array(36);let tot=0;
+    for(let y=0;y<36;y++){let s=0;for(let x=0;x<64;x++){const i=4*(y*64+x);s+=(d[i]*.3+d[i+1]*.59+d[i+2]*.11);}r[y]=s/64/255;tot+=r[y];}
+    vRows=r;vMean=tot/36;vOK=true;
+  }catch(e){vOK=false;document.getElementById('vinfo').textContent='cannot read frame';}
+}
+function loadFile(f){if(!f)return;video.src=URL.createObjectURL(f);video.play().catch(()=>{});document.getElementById('vinfo').textContent=f.name.slice(0,28);specV.reset();}
+document.getElementById('file').addEventListener('change',e=>loadFile(e.target.files[0]));
+const drop=document.getElementById('drop');
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('active');}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('active');}));
+drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
+
+// ---------- spectrum: ring buffer + DFT ----------
+function makeSpec(N){
+  const buf=new Float32Array(N),ts=new Float32Array(N);let n=0,i=0;
+  return {
+    push(v,t){buf[i]=v;ts[i]=t;i=(i+1)%N;if(n<N)n++;},
+    reset(){n=0;i=0;},
+    power(fmax,bins){
+      if(n<64)return null;
+      const first=(i-n+N)%N,dt=(ts[(i-1+N)%N]-ts[first])/(n-1)/1000;if(!(dt>0))return null;
+      const fs=1/dt,out=new Float32Array(bins);let mu=0;for(let j=0;j<n;j++)mu+=buf[(first+j)%N];mu/=n;
+      for(let b=0;b<bins;b++){const f=(b+1)/bins*fmax;let re=0,im=0;
+        for(let j=0;j<n;j++){const w=.5-.5*Math.cos(2*Math.PI*j/(n-1)),x=(buf[(first+j)%N]-mu)*w,ph=2*Math.PI*f*j/fs;re+=x*Math.cos(ph);im-=x*Math.sin(ph);}
+        out[b]=re*re+im*im;}
+      return {p:out,fs,secs:n*dt};
+    }
+  };
+}
+const specP=makeSpec(600),specV=makeSpec(600),specT=makeSpec(600);
+
+// ---------- charts ----------
+const NS='http://www.w3.org/2000/svg';
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+function frame(svg,xt,yt,xl,yl){
+  const L=44,R=12,T=14,B=34,W=520,H=260;svg.textContent='';
+  const g=el('g',{});svg.appendChild(g);
+  for(const t of yt){const y=T+(1-t.v)*(H-T-B);g.appendChild(el('line',{x1:L,x2:W-R,y1:y,y2:y,class:'grid'}));const tx=el('text',{x:L-8,y:y+4,class:'ax','text-anchor':'end'});tx.textContent=t.l;g.appendChild(tx);}
+  for(const t of xt){const x=L+t.v*(W-L-R);g.appendChild(el('line',{x1:x,x2:x,y1:H-B,y2:H-B+4,class:'grid'}));const tx=el('text',{x,y:H-B+16,class:'ax','text-anchor':'middle'});tx.textContent=t.l;g.appendChild(tx);}
+  const xlab=el('text',{x:W-R,y:H-4,class:'ax','text-anchor':'end'});xlab.textContent=xl;g.appendChild(xlab);
+  const ylab=el('text',{x:L,y:T-4,class:'ax'});ylab.textContent=yl;g.appendChild(ylab);
+  return {L,R,T,B,W,H,g,labels:[]};
+}
+function line(F,pts,color,label){
+  if(!pts||!pts.length)return;
+  const X=x=>F.L+x*(F.W-F.L-F.R),Y=y=>F.T+(1-Math.max(0,Math.min(1,y)))*(F.H-F.T-F.B);
+  let d='';pts.forEach(([x,y],i)=>{d+=(i?'L':'M')+X(x).toFixed(1)+' '+Y(y).toFixed(1);});
+  F.g.appendChild(el('path',{d,fill:'none',stroke:color,'stroke-width':2,'stroke-linejoin':'round'}));
+  const k=F.labelBy==='y'?1:0;let best=pts[0];for(const q of pts)if(q[k]>best[k])best=q;
+  let px=Math.min(X(best[0])+6,F.W-F.R-64),py=Y(best[1])-6;
+  for(const [ox,oy] of F.labels)if(Math.abs(oy-py)<13&&Math.abs(ox-px)<70)py=oy+13;
+  F.labels.push([px,py]);
+  const t=el('text',{x:px,y:py,class:'lbl'});t.textContent=label;F.g.appendChild(t);
+}
+const cProf=document.getElementById('cProf'),cSpec=document.getElementById('cSpec');
+const FMAX=6,BINS=60;
+function norm(a){let m=0;for(const v of a)if(v>m)m=v;return m>0?Array.from(a,v=>v/m):Array.from(a,()=>0);}
+let last={};
+function drawProfile(){
+  const F=frame(cProf,[{v:0,l:'0'},{v:.5,l:'0.5'},{v:1,l:'1'}],[{v:0,l:'bottom'},{v:.5,l:'mid'},{v:1,l:'top'}],'brightness / max','height');
+  const s=norm(fluid.rows());last.pP=s;line(F,s.map((v,i)=>[v,1-i/(s.length-1)]),'var(--phys)','equations');
+  const t=norm(trick.rows());last.pT=t;line(F,t.map((v,i)=>[v,1-i/(t.length-1)]),'var(--trick)','the trick');
+  if(vOK&&vRows){const v=norm(vRows);last.pV=v;line(F,v.map((q,i)=>[q,1-i/(v.length-1)]),'var(--vid)','video');}
+}
+function drawSpec(){
+  const F=frame(cSpec,[{v:0,l:'0'},{v:1/3,l:'2'},{v:2/3,l:'4'},{v:1,l:'6'}],[{v:0,l:'0'},{v:.5,l:'0.5'},{v:1,l:'1'}],'Hz','power / max');F.labelBy='y';
+  const draw=(sp,col,lab,key)=>{const r=sp.power(FMAX,BINS);if(!r)return null;const n=norm(r.p.slice(2));last[key]=n;line(F,n.map((v,i)=>[(i+3)/BINS,v]),col,lab);return r;};
+  draw(specT,'var(--trick)','the trick','sT');const rp=draw(specP,'var(--phys)','equations','sP');const rv=draw(specV,'var(--vid)','video','sV');
+  document.getElementById('rSpec').textContent=rv?`video ${rv.secs.toFixed(0)} s at ${rv.fs.toFixed(0)} Hz`:(rp?`equations ${rp.secs.toFixed(0)} s`:'');
+}
+cProf.addEventListener('mousemove',e=>{const r=cProf.getBoundingClientRect();const y=(e.clientY-r.top)/r.height;const H=260,T=14,B=34;const fy=1-Math.max(0,Math.min(1,(y*H-T)/(H-T-B)));
+  const at=a=>a?a[Math.round((1-fy)*(a.length-1))].toFixed(2):'–';
+  document.getElementById('rProf').textContent=`height ${(fy*100).toFixed(0)} % · video ${at(last.pV)} · equations ${at(last.pP)} · trick ${at(last.pT)}`;});
+cProf.addEventListener('mouseleave',()=>document.getElementById('rProf').textContent='');
+cSpec.addEventListener('mousemove',e=>{const r=cSpec.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;const W=520,L=44,R=12;const fx=Math.max(0,Math.min(1,(x*W-L)/(W-L-R)));const b=Math.round(fx*BINS)-3;
+  const at=a=>a&&a[b]!=null?a[b].toFixed(2):'–';
+  document.getElementById('rSpec').textContent=`${(fx*FMAX).toFixed(2)} Hz · video ${at(last.sV)} · equations ${at(last.sP)} · trick ${at(last.sT)}`;});
+cSpec.addEventListener('mouseleave',()=>drawSpec());
+
+// ---------- main loop ----------
+let tick=0;
+function loop(t){
+  fluid.step();paint(physG,physImg,fluid.T,PW*PH);
+  heroG.imageSmoothingEnabled=true;heroG.drawImage(physC,0,0,PW,PH,0,0,heroC.width,heroC.height);
+  glowG.drawImage(physC,0,0,PW,PH,0,0,glowC.width,glowC.height);
+  trick.step();
+  specP.push(fluid.mean(),t);specT.push(trick.mean(),t);
+  if(!video.paused&&!video.ended){measureVideo();if(vOK)specV.push(vMean,t);}
+  if(++tick%6===0)drawProfile();
+  if(tick%30===0)drawSpec();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+video.play().catch(()=>{});
+fetch(video.getAttribute('src')).then(r=>r.blob()).then(b=>{if(!video.currentTime){video.src=URL.createObjectURL(b);video.play().catch(()=>{});}}).catch(()=>{});
+
+// ---------- the trick's source, shown as itself ----------
+const SRC=`// The whole fire. Fourier 1822, finite differences, a random boundary at the bottom.
+const c=document.querySelector('canvas'),g=c.getContext('2d'),W=c.width=160,H=c.height=100,h=new Float32Array(W*(H+2)),img=g.createImageData(W,H),p=img.data;
+(function frame(){
+  for(let x=0;x<W;x++)h[H*W+x]=h[(H+1)*W+x]=Math.random()<.5?1:0;            // source: embers at the bottom, on or off
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){                                  // every cell looks one row down (the updraft)
+    const j=(y+1)*W+x+(Math.random()*3|0)-1,s=.7*(h[j]||0)+.15*(h[j-1]||0)+.15*(h[j+1]||0); // a random step sideways, then blur (the diffusion)
+    h[y*W+x]=Math.max(0,s-.02*Math.random());                                // and cools a little (the decay)
+  }
+  for(let i=0;i<W*H;i++){const v=3*h[i];p[4*i]=255*Math.min(1,v);p[4*i+1]=255*Math.max(0,Math.min(1,v-1));p[4*i+2]=255*Math.max(0,v-2);p[4*i+3]=255}
+  g.putImageData(img,0,0);requestAnimationFrame(frame)
+})()
+`;
+const pre=document.getElementById('src');
+pre.textContent=SRC;pre.innerHTML=pre.innerHTML.replace(/(\/\/.*)$/gm,'<span class="c">$1</span>');
+const lines=SRC.trim().split("\n").length,bytes=new TextEncoder().encode(SRC.trim()).length;
+document.getElementById('count').innerHTML=`<span><b>${lines}</b> lines</span><span><b>${bytes}</b> bytes, comments included</span><span><b>3</b> constants, D v k</span><span><b>0</b> reasons to go up</span>`;
+</script>
+
+<script type="module">
+// ---------- the model: a direction, read, and each word's share of it ----------
+const MODEL_ID='Xenova/all-MiniLM-L6-v2';
+const BIG=['the fire is roaring','a huge blazing bonfire','feed it more wood and make it roar','flames leaping high into the night','a raging inferno','crank it up,bigger flames','the whole pile is ablaze','tall wild flames and sparks','put more logs on it','it caught properly and is burning hard','big flames,lots of heat','the fire is getting bigger','stoke it up','a fierce fire,roaring away','burning strong and hot','build it up higher'];
+const SMALL=['the fire is dying down','just glowing embers','let it burn low and quiet','a small gentle flame','almost out,only ash','calm it down,smaller','the last embers fading','a tiny flicker in the dark','only coals left','the fire has burnt down','it is going out','the fire is getting smaller','let it die','a low fire,hardly any flame','burning weak and cool','keep it small'];
+const sayEl=document.getElementById('say'),bar=document.getElementById('bar'),fill=document.getElementById('barfill');
+const say=(t,busy)=>{sayEl.innerHTML=t;sayEl.style.color=busy?'var(--muted)':'';};
+const showBar=p=>{if(p==null){bar.classList.remove('on');return;}bar.classList.add('on');fill.style.width=Math.max(2,Math.min(100,p))+'%';};
+let embed=null,dir=null,centre=null;
+const dot=(a,b)=>{let s=0;for(let i=0;i<a.length;i++)s+=a[i]*b[i];return s;};
+async function vec(s){const o=await embed(s,{pooling:'mean',normalize:true});return Array.from(o.data);}
+function project(e){return 2*dot(e.map((v,i)=>v-centre[i]),dir)/dot(dir,dir);}   // the two training means sit at ±1
+async function load(){
+  try{
+    showBar(0);
+    const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1');
+    embed=await pipeline('feature-extraction',MODEL_ID,{dtype:'q8',progress_callback:p=>{if(p.status==='progress'&&p.total>1e6){showBar(p.progress);say(`fetching all-MiniLM-L6-v2 ${Math.round(p.progress)} %`,true);}}});
+    say('embedding thirty-two sentences to find the direction…',true);
+    const b=await Promise.all(BIG.map(vec)),s=await Promise.all(SMALL.map(vec));
+    const mb=b[0].map((_,i)=>b.reduce((a,v)=>a+v[i],0)/b.length),ms=s[0].map((_,i)=>s.reduce((a,v)=>a+v[i],0)/s.length);
+    dir=mb.map((v,i)=>v-ms[i]);centre=mb.map((v,i)=>(v+ms[i])/2);
+    showBar(null);say('all-MiniLM-L6-v2 loaded. Type, and the embers follow the words.');
+    run();
+  }catch(e){showBar(null);
+    const blocked=/fetch|Failed|network|load/i.test(String(e));
+    say(blocked?'this hosted copy is not allowed to fetch the model from Hugging Face. Run the page from the repo and the words will burn.':'could not load the model: '+String(e).slice(0,120));}
+}
+const W=PW;
+let pending=null,running=false;
+async function run(){
+  if(!embed)return;
+  const text=document.getElementById('ask').value.trim();
+  const words=text.split(/\s+/).filter(Boolean).slice(0,24);
+  if(!words.length){fluid.heat=null;document.getElementById('words').innerHTML='';return;}
+  if(running){pending=true;return;}
+  running=true;
+  const t0=performance.now();
+  const full=project(await vec(words.join(' ')));
+  const shares=[];
+  if(words.length>1)for(let i=0;i<words.length;i++){const w=words.filter((_,j)=>j!==i).join(' ');shares.push(full-project(await vec(w)));}
+  else shares.push(full);
+  const ms=performance.now()-t0;
+  // the score moves the physics; the words become the embers
+  const s=Math.max(-1.5,Math.min(1.5,full));
+  setKnob('p',.55+.3*s);setKnob('beta',.5*(1+.45*s));setKnob('k',.025*(1-.3*s));
+  document.getElementById('dot').style.left=(50+s/1.5*50)+'%';
+  const heat=new Float32Array(W),x0=W*.12,x1=W*.88,span=(x1-x0)/words.length;
+  const wordsEl=document.getElementById('words');wordsEl.innerHTML='';
+  words.forEach((w,i)=>{
+    const h=Math.max(.15,Math.min(1,.6+.25*s+1.8*shares[i]));
+    for(let x=Math.round(x0+i*span);x<Math.round(x0+(i+1)*span)-1;x++)heat[x]=h;
+    const sp=document.createElement('span');sp.textContent=w;
+    const leftPct=(x0+i*span)/W*100,widthPct=span/W*100;
+    sp.style.left=leftPct+'%';sp.style.width=widthPct+'%';
+    const c=Math.round(255*h);sp.style.color=`rgb(${Math.max(125,c)},${Math.round(110+120*h*h)},${Math.round(92+40*h)})`;
+    if(shares[i]<-.05)sp.style.color='var(--vid)';
+    wordsEl.appendChild(sp);
+  });
+  fluid.heat=heat;
+  const bars=document.getElementById('bars');bars.innerHTML='';
+  const mx=Math.max(.05,...shares.map(Math.abs));
+  words.forEach((w,i)=>{const r=document.createElement('div');r.className='row';const v=shares[i];
+    r.innerHTML=`<span class="w">${w.replace(/[<>&]/g,'')}</span><span class="b"><b></b><i class="${v<0?'neg':''}" style="left:${v<0?50-50*Math.abs(v)/mx:50}%;width:${50*Math.abs(v)/mx}%"></i></span><span class="n">${v>=0?'+':''}${v.toFixed(2)}</span>`;bars.appendChild(r);});
+  say(`projection <b>${full>=0?'+':''}${full.toFixed(2)}</b> on the embers→inferno direction · ${words.length+(words.length>1?1:0)} forward passes in ${ms.toFixed(0)} ms`);
+  running=false;if(pending){pending=false;run();}
+}
+let timer=null;
+document.getElementById('ask').addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(run,250);});
+document.getElementById('askform').addEventListener('submit',e=>{e.preventDefault();run();});
+load();
+</script>
